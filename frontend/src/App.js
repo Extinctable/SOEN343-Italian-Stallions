@@ -1,24 +1,53 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import NavBar from "./components/NavBar"; // The NavBar
+import LoginForm from "./components/LoginForm"; // The LoginForm
+import "./App.css"; // any global styles
+
+function Home() {
+  return <h2>Home Page</h2>;
+}
+
+function About() {
+  return <h2>About Page</h2>;
+}
+
+function Contact() {
+  return <h2>Contact Page</h2>;
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <MainLayout />
+    </Router>
+  );
+}
+
+/**
+ * Renders the NavBar and Main Content
+ */
+function MainLayout() {
+  const location = useLocation();
+
+  // Hide NavBar on login page
+  const hideNavOnLoginPage = location.pathname === "/login";
+
+  return (
+    <>
+      {/* Show NavBar unless on the login page */}
+      {!hideNavOnLoginPage && <NavBar />}
+
+      {/* Main Content */}
+      <div className="home">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/Book-Session" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<LoginForm />} />
+        </Routes>
+      </div>
+    </>
   );
 }
 
