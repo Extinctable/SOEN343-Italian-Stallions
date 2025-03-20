@@ -1,0 +1,69 @@
+/* Responsive media queries */
+@media only screen and (max-width: 768px) {
+  .responsive-text {
+    font-size: 14px;
+  }
+}
+
+@media only screen and (min-width: 769px) and (max-width: 1024px) {
+  .responsive-text {
+    font-size: 16px;
+  }
+}
+
+@media only screen and (min-width: 1025px) {
+  .responsive-text {
+    font-size: 18px;
+  }
+}
+
+/* Fluid typography */
+.fluid-type {
+  font-size: 16px;
+}
+
+@media screen and (min-width: 320px) {
+  .fluid-type {
+    font-size: calc(16px + (20 - 16) * ((100vw - 320px) / (1200 - 320)));
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .fluid-type {
+    font-size: 20px;
+  }
+}
+
+/* Fluid line height */
+.fluid-line {
+  line-height: 1.4;
+}
+
+@media screen and (min-width: 320px) {
+  .fluid-line {
+    line-height: calc(1.4 + (1.8 - 1.4) * ((100vw - 320px) / (1200 - 320)));
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .fluid-line {
+    line-height: 1.8;
+  }
+}
+
+/* Fluid letter spacing */
+.fluid-letter {
+  letter-spacing: 0.5px;
+}
+
+@media screen and (min-width: 320px) {
+  .fluid-letter {
+    letter-spacing: calc(0.5px + (1.2 - 0.5) * ((100vw - 320px) / (1200 - 320)));
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .fluid-letter {
+    letter-spacing: 1.2px;
+  }
+}
