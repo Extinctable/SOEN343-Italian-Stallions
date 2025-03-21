@@ -1,0 +1,108 @@
+@import url('./styles/config/config.css');
+
+.nav {
+    position: relative;
+}
+
+/* Styles for 'right' and 'center' navigation positions on smaller screens */
+@media screen and (max-width: 990px) { /* Adjusted for consistent behavior */
+    [data-nav-position="right"] .nav,
+    [data-nav-position="center"] .nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.6); /* Ensure consistent semi-transparent background */
+        backdrop-filter: blur(10px); /* Maintain blur effect */
+        pointer-events: none;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        z-index: 9;
+        transform: scale(1); /* Ensures proper size during transitions */
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    }
+
+    /* Ensure smooth opening animation */
+    [data-nav-position="right"] .nav.open,
+    [data-nav-position="center"] .nav.open {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: auto;
+    }
+
+    /* Ensure smooth closing animation without misalignment */
+    [data-nav-position="right"] .nav.close,
+    [data-nav-position="center"] .nav.close {
+        opacity: 0;
+        transform: scale(1.05); /* Prevents flickering effect */
+        pointer-events: none;
+    }
+}
+
+/* Styles for 'overlay' navigation */
+[data-nav-position="overlay"] .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9;
+    opacity: 0;
+    transform: scale(1);
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* Ensure overlay properly fades in */
+[data-nav-position="overlay"] .nav.open {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+/* Ensure overlay properly fades out */
+[data-nav-position="overlay"] .nav.close {
+    opacity: 0;
+    transform: scale(1.05);
+    pointer-events: none;
+}
+
+/* Styles for larger screens */
+@media screen and (min-width: 990px) { 
+    [data-nav-position="right"] .nav,
+    [data-nav-position="center"] .nav {
+        place-self: center;
+        pointer-events: auto;
+    }
+
+    [data-nav-position="center"] .nav {
+        grid-column: 2 / 3;
+    }
+
+    [data-nav-position="right"] .nav {
+        justify-self: end;
+    }
+}
+
+/* Navigation item styles */
+.nav__item {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--color-black);
+    letter-spacing: 2.22px;
+    text-align: left;
+    text-transform: uppercase;
+    margin: 24px;
+}

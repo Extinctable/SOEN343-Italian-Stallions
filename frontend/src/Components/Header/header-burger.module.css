@@ -1,0 +1,54 @@
+@import url('./styles/config/config.css');
+
+.burger {
+    width: 28px;
+    height: 17px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 11;
+    grid-column: 2 / 3;
+    align-self: center;
+    justify-self: end;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    right: 24px;
+    transform: translateY(-50%);
+}
+
+/* Hide burger menu for large screens */
+@media screen and (min-width: 990px) { /* Assuming $large-up is 990px */
+    [data-nav-position="right"] .burger,
+    [data-nav-position="center"] .burger {
+        display: none;
+    }
+}
+
+.burger__line {
+    width: 28px;
+    height: 2px;
+    background: var(--color-black);
+    border-radius: 2px;
+    transform-origin: left center;
+    transition: all 0.3s ease;
+}
+
+/* First line animation */
+.open .burger__line:first-of-type {
+    transform: rotate(44deg) translate3d(-2px, 0, 0);
+}
+
+/* Second line (middle) animation */
+.burger__line:nth-of-type(2) {
+    width: 17px;
+}
+
+.open .burger__line:nth-of-type(2) {
+    opacity: 0;
+}
+
+/* Third line animation */
+.open .burger__line:last-of-type {
+    transform: rotate(-46deg) translate3d(-4px, 0, 0);
+}

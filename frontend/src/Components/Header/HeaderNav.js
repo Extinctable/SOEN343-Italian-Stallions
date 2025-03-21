@@ -1,4 +1,5 @@
 import React from "react";
+import s from "./header-nav.module.css";
 
 const HeaderNav = React.forwardRef(({ items, isMenuOpen }, ref) => {
   const openClass = isMenuOpen ? s.open : "";

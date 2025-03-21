@@ -1,4 +1,5 @@
 import React from "react";
+import s from "./header-burger.module.css";
 
 const HeaderBurger = ({ toggleNav, isMenuOpen }) => {
   const openClass = isMenuOpen ? s.open : "";
