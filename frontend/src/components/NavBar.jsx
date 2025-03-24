@@ -2,6 +2,13 @@ import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import "./NavBar.css";
 
+/**
+ * A direct React conversion of the original HTML structure:
+ * - <nav class="sidebar close"> ...
+ * - We replace <a href="#"> with <NavLink to="/...">
+ * - We keep the .close toggle for the collapsed sidebar
+ * - We keep a "dark" class on <body> for dark mode
+ */
 function NavBar() {
   const [isSidebarClosed, setIsSidebarClosed] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
