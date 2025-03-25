@@ -1,56 +1,40 @@
-import React, {useState} from "react";
+import React from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 
+import HeaderMain from "./Components/Header/HeaderMain";
+import Footer from "./Components/Footer/Footer";
+import NavBar from "./Components/NavBar";
+import LoginForm from "./Components/LoginForm";
+import AboutUs from "./Components/AboutUsPage/AboutUs";
+import Contact from "./Components/Contact/Contact";
+import UserAnalytics from './Components/Analytics/UserAnalytics';
+import HomePage from "./Components/HomePage/HomePage.jsx";
+import AccountSettings from "./Components/AccountSettings/AccountSettings";
 
-import HeaderMain from "./components/Header/HeaderMain"; // Header
-import Footer from "./components/Footer/Footer"; // Footer
-import NavBar from "./components/NavBar"; // The NavBar
-import LoginForm from "./components/LoginForm"; // The LoginForm
-import AboutUs from "./components/AboutUsPage/AboutUs"; // About us
-import Contact from "./components/Contact/Contact"; // Contact us
+import { UserProvider } from "./context/UserContext"; 
+
 import "./App.css"; // any global styles
 
 function Home() {
-  return <h2>Home Page balls</h2>;
+  return <HomePage />; 
 }
 
 function About() {
-  return <div>
-  <h2>About Page</h2>
-  <AboutUs /> {}
-</div>;
+  return (
+    <div>
+      <h2>About Page</h2>
+      <AboutUs />
+    </div>
+  );
 }
 
-/* function Contact() {
-  const redirectToAnotherPage = true; // Set this to the condition for redirecting
-//select* from users;
-  if (redirectToAnotherPage) {
-    // This will redirect to '/some-other-page' immediately after rendering Contact
-    return <Navigate to="/contact.js" />;
-  }
-
-
-  return <h2>Contact Page</h2>;
-}
-*/
-
-
-
-/**
- * Renders the NavBar and Main Content
- */
 function MainLayout() {
   const location = useLocation();
-
-  // Hide NavBar on login page
   const hideNavOnLoginPage = location.pathname === "/login";
 
   return (
     <>
-      {/* Show NavBar unless on the login page */}
       {!hideNavOnLoginPage && <NavBar />}
-
-      {/* Main Content */}
       <div className="home">
         <Routes>
           <Route path="/" element={<Navigate to="/home" />} />
@@ -59,37 +43,27 @@ function MainLayout() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/Analytics" element={<UserAnalytics />} />
+          <Route path="/Account" element={<AccountSettings />} />
         </Routes>
       </div>
     </>
   );
 }
 
-/**
- * The main application component.
- * Sets up routing and displays the appropriate components.
- */
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* MainLayout wraps most pages */}
-        <Route path="/*" element={<MainLayout />} />
-
-        {/* About Us is separate and renders on its own */}
-        <Route path="/about-us" element={<AboutUs />} />
-
-        {/* Header renders on its own for debugging */}
-        <Route path="/header" element={<HeaderMain />} />
-
-        {/* Footer renders on its own for debugging */}
-        <Route path="/footer" element={<Footer />} />
-
-        {/* Contact Us renders on its own for debugging */}
-        <Route path="/contact" element={<Contact />} />
-
-      </Routes>
-    </Router>
+    <UserProvider> {/* ✅ Wrap the whole app */}
+      <Router>
+        <Routes>
+          <Route path="/*" element={<MainLayout />} />
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/header" element={<HeaderMain />} />
+          <Route path="/footer" element={<Footer />} />
+          <Route path="/contact" element={<Contact />} />
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 }
 

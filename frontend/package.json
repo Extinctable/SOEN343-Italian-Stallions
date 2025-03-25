@@ -9,17 +9,21 @@
     "@testing-library/user-event": "^13.5.0",
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
+    "chart.js": "^4.4.8",
     "cors": "^2.8.5",
     "crypto-browserify": "^3.12.1",
     "css-loader": "^7.1.2",
     "css-modules": "^0.3.0",
+    "dotenv": "^16.4.7",
     "gsap": "^3.12.7",
     "neo4j-driver": "^5.28.1",
+    "openai": "^4.89.0",
     "path-browserify": "^1.0.1",
     "pg": "^8.13.3",
     "postcss-loader": "^8.1.1",
     "querystring-es3": "^0.2.1",
     "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0",
     "react-scripts": "5.0.1",
@@ -32,7 +36,7 @@
   },
   "scripts": {
     "start": "echo \"Run 'npm run server' for the backend and 'npm run client' for the frontend\"",
-    "client": "PORT=3001 react-scripts start",
+    "client": "cross-env PORT=3001 react-scripts start",
     "proxy": "http://localhost:5002",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -59,6 +63,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1"
   }
