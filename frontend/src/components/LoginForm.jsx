@@ -96,7 +96,7 @@ function LoginForm() {
         )}
 
         <p>
-          Don't have an account? <a href="#" className="a2">Sign up!</a>
+          Don't have an account? <a href="/signup" className="a2">Sign up!</a>
         </p>
       </div>
     </div>

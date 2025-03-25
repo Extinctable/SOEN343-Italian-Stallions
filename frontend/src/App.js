@@ -1,10 +1,12 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 
-import HeaderMain from "./Components/Header/HeaderMain";
+import HeaderExport from "./Components/Header/HeaderExport";
+// import HeaderMain from "./Components/Header/HeaderMain";
 import Footer from "./Components/Footer/Footer";
 import NavBar from "./Components/NavBar";
 import LoginForm from "./Components/LoginForm";
+import SignUpPage from "./Components/signup/signup";
 import AboutUs from "./Components/AboutUsPage/AboutUs";
 import Contact from "./Components/Contact/Contact";
 import UserAnalytics from './Components/Analytics/UserAnalytics';
@@ -42,6 +44,7 @@ function MainLayout() {
           <Route path="/Book-Session" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<LoginForm />} />
+          <Route path="/signup" element={<SignUpPage />} />
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/Analytics" element={<UserAnalytics />} />
           <Route path="/Account" element={<AccountSettings />} />
@@ -58,7 +61,7 @@ function App() {
         <Routes>
           <Route path="/*" element={<MainLayout />} />
           <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/header" element={<HeaderMain />} />
+          <Route path="/header" element={<HeaderExport />} />
           <Route path="/footer" element={<Footer />} />
           <Route path="/contact" element={<Contact />} />
         </Routes>
