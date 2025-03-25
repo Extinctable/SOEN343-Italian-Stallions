@@ -32,11 +32,13 @@ function About() {
 
 function MainLayout() {
   const location = useLocation();
-  const hideNavOnLoginPage = location.pathname === "/login";
+  const hideNavOnAuthPages = 
+    location.pathname === "/login" || 
+    location.pathname === "/signup";
 
   return (
     <>
-      {!hideNavOnLoginPage && <NavBar />}
+      {!hideNavOnAuthPages && <NavBar />}
       <div className="home">
         <Routes>
           <Route path="/" element={<Navigate to="/home" />} />
