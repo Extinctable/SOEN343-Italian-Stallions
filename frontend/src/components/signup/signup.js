@@ -11,9 +11,9 @@ import {
   InputAdornment 
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import './signup.css';
+import "./SignUp.css";
 
-const SignUpPage = () => {
+const SignUp = () => {
   // State for form data
   const [formData, setFormData] = useState({
     userType: '',
@@ -140,8 +140,6 @@ const SignUpPage = () => {
     }
   };
 
-  return (
-    <div className="signup-container">
       <form onSubmit={handleSubmit}>
         <h2>Event System Sign Up</h2>
 
@@ -267,8 +265,6 @@ const SignUpPage = () => {
           Sign Up
         </Button>
       </form>
-    </div>
-  );
 };
 
-export default SignUpPage;
+export default SignUp;
