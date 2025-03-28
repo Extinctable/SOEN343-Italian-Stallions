@@ -1,12 +1,14 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 
+import LandingPage from "./Components/LandingPage/LandingPage";
 import HeaderExport from "./Components/Header/HeaderExport";
 // import HeaderMain from "./Components/Header/HeaderMain";
 import Footer from "./Components/Footer/Footer";
 import NavBar from "./Components/NavBar";
 import LoginForm from "./Components/LoginForm";
-import SignUpPage from "./Components/signup/signup";
+import SignUp from "./Components/SignUp/SignUp"; // First sign up page
+import SignUpLogin from "./Components/SignUpLogin/SignUpLogin"; // Sign up and login together
 import AboutUs from "./Components/AboutUsPage/AboutUs";
 import Contact from "./Components/Contact/Contact";
 import UserAnalytics from './Components/Analytics/UserAnalytics';
@@ -34,27 +36,37 @@ function MainLayout() {
   const location = useLocation();
   const hideNavOnAuthPages = 
     location.pathname === "/login" || 
-    location.pathname === "/signup";
+    location.pathname === "/signuplogin" ||
+    location.pathname === "/signup" ||
+    location.pathname === "/landing";
 
   return (
     <>
       {!hideNavOnAuthPages && <NavBar />}
-      <div className="home">
-        <Routes>
-          <Route path="/" element={<Navigate to="/home" />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/Book-Session" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/Analytics" element={<UserAnalytics />} />
-          <Route path="/Account" element={<AccountSettings />} />
-        </Routes>
-      </div>
+      
+      {/* Render LandingPage outside of the .home div */}
+      {location.pathname === "/landing" ? (
+        <LandingPage />
+      ) : (
+        <div className="home">
+          <Routes>
+            <Route path="/" element={<Navigate to="/landing" />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/Book-Session" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/signuplogin" element={<SignUpLogin />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/Analytics" element={<UserAnalytics />} />
+            <Route path="/Account" element={<AccountSettings />} />
+          </Routes>
+        </div>
+      )}
     </>
   );
 }
+
 
 function App() {
   return (
