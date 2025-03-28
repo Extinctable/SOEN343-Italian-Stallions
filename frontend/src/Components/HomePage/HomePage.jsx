@@ -15,7 +15,9 @@ const HomePage = () => {
   const [recommendation, setRecommendation] = useState(null);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [showRecommendationPopup, setShowRecommendationPopup] = useState(false);
-    const [recommendationText, setRecommendationText] = useState("");
+  const [recommendationText, setRecommendationText] = useState("");
+    const [activeDescription, setActiveDescription] = useState(null);
+
 
   const options = [
     "sports", "news", "comedy", "anime", "gaming", "movies", "education", "technology",
@@ -136,10 +138,13 @@ const HomePage = () => {
         </div>
       ) : (
         <>
-          <p>Your current preferences: {preference}</p>
+          <p className='current_stream_pref'>Your current preferences: {preference}</p>
+          <div className='preferenceSection'>
+            <p className='homepage-subtext'>If you don't know which stream to pick, we can help you!</p>
           <button onClick={handleRecommendation} className="submit-button homePagePreferenceBtn">
             Recommend Me a Stream
           </button>
+          </div>
         </>
       )}
 
@@ -184,6 +189,7 @@ const HomePage = () => {
 
 
       <div className="stream-setup">
+        <p className='current_stream_pref'>{username} we know you are a very creative mind, click here to schedule your stream</p>
         <button className="submit-button homePagePreferenceBtn" onClick={() => setShowStreamForm(true)}>
           Schedule Stream
         </button>
@@ -224,17 +230,40 @@ const HomePage = () => {
       </div>
 
       <div className="stream-carousel">
-        <h2>Upcoming Streams</h2>
+        <h2 className='current_stream_pref'>Upcoming Streams</h2>
         <div className="scroll-container">
-          {upcomingStreams.map((stream) => (
-            <div key={stream.id} className="stream-card">
-              <h3>{stream.title}</h3>
-              <p>{stream.category}</p>
-              <p>{new Date(stream.scheduled_time).toLocaleString()}</p>
-              <p>By: {stream.user_first_name} {stream.user_last_name}</p>
-            </div>
-          ))}
+  {upcomingStreams.map((stream) => (
+    <React.Fragment key={stream.id}>
+    <div className={`stream-card-upgraded ${activeDescription === stream.id ? 'blurred' : ''}`}>
+      <div className="stream-card-details">
+        <p className="stream-title">{stream.title}</p>
+        <p className="stream-category">{stream.category}</p>
+        <p className="stream-time">{new Date(stream.scheduled_time).toLocaleString()}</p>
+        <p className="stream-author">By: {stream.user_first_name} {stream.user_last_name}</p>
+      </div>
+      <button
+        className="stream-card-button"
+        onClick={() => setActiveDescription(stream.id)}
+      >
+        Details
+      </button>
+    </div>
+  
+    {activeDescription === stream.id && (
+      <div className="stream-overlay" onClick={() => setActiveDescription(null)}>
+        <div className="stream-overlay-content" onClick={(e) => e.stopPropagation()}>
+          <p className="stream-description">{stream.description}</p>
+          <button className="close-button" onClick={() => setActiveDescription(null)}>
+            Close
+          </button>
         </div>
+      </div>
+    )}
+  </React.Fragment>
+  
+  ))}
+</div>
+
       </div>
     </div>
   );
