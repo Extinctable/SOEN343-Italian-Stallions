@@ -3,7 +3,7 @@ import "./styles/styles.css";
 import navigation from "./data/data";
 import Logo from "../../stallion logo.webp"
 
-import HeaderMain from "./HeaderMain";
+import HeaderMain from "./HeaderMain.js";
 
 export default function HeaderExport() {
   return (

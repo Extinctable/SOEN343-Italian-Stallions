@@ -83,7 +83,18 @@ function NavBar() {
                 <span className="text nav-text">Account Settings</span>
               </NavLink>
             </li>
-
+            <li className="nav-link">
+              <NavLink to="/Network" className={({ isActive }) => (isActive ? "active-link" : "")}>
+                <i className="bx bx-user-plus icon"></i>
+                <span className="text nav-text">Network</span>
+              </NavLink>
+            </li>
+            <li className="nav-link">
+              <NavLink to="/Message" className={({ isActive }) => (isActive ? "active-link" : "")}>
+                <i className="bx bx-message icon"></i>
+                <span className="text nav-text">Message</span>
+              </NavLink>
+            </li>
           </ul>
         </div>
 

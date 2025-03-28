@@ -1,10 +1,10 @@
 import React, { useState, useRef, createRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import { gsap } from 'gsap/all';
-import HeaderNav from "./HeaderNav";
-import HeaderLogo from "./HeaderLogo";
-import HeaderBurger from "./HeaderBurger";
-import { useMediaQuery } from "./hooks/hooks";
+import HeaderNav from "./HeaderNav.js";
+import HeaderLogo from "./HeaderLogo.js";
+import HeaderBurger from "./HeaderBurger.js";
+import { useMediaQuery } from "./hooks/hooks.js";
 import s from "./header-main.module.css";
 
 const HeaderMain = ({ items, logo, navPosition }) => {
