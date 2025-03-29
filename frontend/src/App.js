@@ -12,6 +12,8 @@ import SignUpLogin from "./Components/SignUpLogin/SignUpLogin"; // Sign up and l
 import AboutUs from "./Components/AboutUsPage/AboutUs";
 import Contact from "./Components/Contact/Contact";
 import UserAnalytics from './Components/Analytics/UserAnalytics';
+import Message from "./Components/Message/Message";
+import Network from "./Components/Network/Network";
 import HomePage from "./Components/HomePage/HomePage.jsx";
 import AccountSettings from "./Components/AccountSettings/AccountSettings";
 
@@ -60,6 +62,8 @@ function MainLayout() {
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/Analytics" element={<UserAnalytics />} />
             <Route path="/Account" element={<AccountSettings />} />
+            <Route path="/network" element={<Network />} />
+            <Route path="/message" element={<Message />} />
           </Routes>
         </div>
       )}
