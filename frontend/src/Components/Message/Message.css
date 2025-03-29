@@ -1,0 +1,124 @@
+/* Message.css */
+.message-container {
+    display: flex;
+    height: 100vh;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .side-panel {
+    width: 250px;
+    background-color: #f4f4f4;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .side-panel h3 {
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    color: #333;
+  }
+  
+  .side-panel ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .side-panel li {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .side-panel li:hover {
+    background-color: #ddd;
+  }
+  
+  .side-panel .active {
+    background-color: #c1e1e6;
+    font-weight: bold;
+  }
+  
+  .message-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    padding: 20px;
+  }
+  
+  .message-panel .header {
+    margin-bottom: 20px;
+  }
+  
+  .message-panel .header h3 {
+    font-size: 1.5em;
+    color: #333;
+  }
+  
+  .chat-box {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+    overflow-y: auto;
+  }
+  
+  .messages {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .message {
+    margin-bottom: 10px;
+  }
+  
+  .sender {
+    font-weight: bold;
+  }
+  
+  .content {
+    margin-left: 10px;
+    background-color: #f1f1f1;
+    padding: 5px;
+    border-radius: 5px;
+    max-width: 60%;
+    word-wrap: break-word;
+  }
+  
+  .input-area {
+    display: flex;
+    align-items: center;
+  }
+  
+  .input-area input {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    margin-right: 10px;
+  }
+  
+  .input-area button {
+    padding: 10px 20px;
+    background-color: #5cb85c;
+    border: none;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .input-area button:hover {
+    background-color: #4cae4c;
+  }
+  
+  .no-chat {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: #666;
+  }
+  
