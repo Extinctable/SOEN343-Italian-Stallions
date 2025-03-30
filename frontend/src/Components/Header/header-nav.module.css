@@ -2,6 +2,7 @@
 
 .nav {
     position: relative;
+    margin-top: -200px; /* Added for the stallions */
 }
 
 /* Styles for 'right' and 'center' navigation positions on smaller screens */
