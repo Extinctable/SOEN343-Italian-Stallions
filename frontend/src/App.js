@@ -7,7 +7,7 @@ import HeaderExport from "./Components/Header/HeaderExport";
 import Footer from "./Components/Footer/Footer";
 import NavBar from "./Components/NavBar";
 import LoginForm from "./Components/LoginForm";
-import SignUp from "./Components/SignUp/SignUp"; // First sign up page
+import SignUp from "./Components/signup/signup"; // First sign up page
 import SignUpLogin from "./Components/SignUpLogin/SignUpLogin"; // Sign up and login together
 import AboutUs from "./Components/AboutUsPage/AboutUs";
 import Contact from "./Components/Contact/Contact";

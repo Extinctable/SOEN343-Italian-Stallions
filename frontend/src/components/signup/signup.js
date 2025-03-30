@@ -11,7 +11,7 @@ import {
   InputAdornment 
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import "./SignUp.css";
+import "./signup.css";
 
 const SignUp = () => {
   // State for form data
