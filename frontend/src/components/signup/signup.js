@@ -1,270 +1,573 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { 
-  TextField, 
-  Button, 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel, 
-  IconButton, 
-  InputAdornment 
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import React, { useState } from "react";
 import "./SignUp.css";
+import backgroundImage from "../Assets/stallion-logo-darkmode.png";
+import Button from "@mui/material/Button";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { TextField, InputAdornment, IconButton } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 const SignUp = () => {
-  // State for form data
+  // State to track the current selected role among four possibilities.
+  const [role, setRole] = useState("organizer"); // Default role is "organizer"
+
+  // State to hold the form data.
+  // For sign up: fullName, email, password, and confirmpassword.
+  // For password change modal, newpassword is used.
   const [formData, setFormData] = useState({
-    userType: '',
-    category: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    organizationName: ''
+    fullName: "",
+    email: "",
+    password: "",
+    confirmpassword: "",
+    newpassword: "",
   });
 
-  // State for form validation and visibility
-  const [errors, setErrors] = useState({});
+  // State to determine if the form is in login mode or sign up mode.
+  const [isLogin, setIsLogin] = useState(false);
+  // State for holding form validation errors.
+  const [validationErrors, setValidationErrors] = useState({});
+  // State to control the visibility of the password change modal.
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // States to toggle password visibility for the various password fields.
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
-  // User type categories based on the system description
-  const userCategories = {
-    Organizers: [
-      'Event Organizers and Planners',
-      'Sponsors and Exhibitors'
-    ],
-    Attendees: [
-      'Speakers',
-      'Learners'
-    ],
-    AdministrativeUsers: [
-      'Technical Person',
-      'Executive Personnel'
-    ],
-    Stakeholders: [
-      'Educational Institutions',
-      'Event Management Companies',
-      'Technology Providers'
-    ]
+  // Toggle functions for each password visibility state.
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+  const toggleConfirmPasswordVisibility = () =>
+    setShowConfirmPassword(!showConfirmPassword);
+  const toggleNewPasswordVisibility = () =>
+    setShowNewPassword(!showNewPassword);
+
+  const navigate = useNavigate();
+
+  // Validation function for sign up / registration.
+  const validateSignUp = () => {
+    const { fullName, email, password, confirmpassword } = formData;
+    const errors = {};
+
+    // Validate full name (only letters and spaces, between 1 and 100 characters).
+    if (!/^[a-zA-Z\s]{1,100}$/.test(fullName)) {
+      errors.fullName = "Full name is not valid";
+    }
+
+    // Basic email validation.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Email is not valid";
+    }
+
+    // Validate password strength: at least 8 characters, with at least one letter and one number.
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)) {
+      errors.password =
+        "Password must be at least 8 characters, including at least one letter and one number.";
+    }
+
+    // Check that password and confirm password match.
+    if (password !== confirmpassword) {
+      errors.confirmpassword = "Passwords do not match.";
+    }
+
+    return errors;
   };
 
-  // Validate form inputs
-  const validateForm = () => {
-    const newErrors = {};
+  // Validation function for password reset.
+  const validatePasswordReset = () => {
+    const { email, newpassword, confirmpassword } = formData;
+    const errors = {};
 
-    // Email validation
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email address';
+    // Validate email.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Email is not valid";
     }
 
-    // Password validation
-    if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long';
+    // Validate new password.
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(newpassword)) {
+      errors.newpassword =
+        "New password must be at least 8 characters, including at least one letter and one number.";
     }
 
-    // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+    // Check that new password and confirm password match.
+    if (newpassword !== confirmpassword) {
+      errors.confirmpassword = "Passwords do not match.";
     }
 
-    // User type and category validation
-    if (!formData.userType) {
-      newErrors.userType = 'Please select a user type';
-    }
-
-    if (!formData.category) {
-      newErrors.category = 'Please select a category';
-    }
-
-    // Full name validation for non-organizational users
-    if (!formData.organizationName && !formData.fullName) {
-      newErrors.fullName = 'Full name is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return errors;
   };
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
+  // Handler for the sign up form submission.
+  const handleSignUp = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
+    const errors = validateSignUp();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
       return;
     }
 
+    // Use a generic signup endpoint and send the role along with the other fields.
+    const url = "http://localhost:5000/signup";
     try {
-      // Prepare payload based on user type
-      const payload = {
+      const response = await axios.post(url, {
+        role, // role is one of: organizer, attendee, administrator, stakeholder
+        fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
-        userType: formData.userType,
-        category: formData.category,
-        ...(formData.organizationName && { organizationName: formData.organizationName }),
-        ...(formData.fullName && { fullName: formData.fullName })
-      };
+      });
 
-      // Adjust API endpoint based on user type
-      const endpoint = `/api/signup/${formData.userType.toLowerCase()}`;
-      
-      const response = await axios.post(endpoint, payload);
-
-      // Handle successful signup
       if (response.status === 200) {
-        alert('Signup successful!');
-        // Redirect or navigate to appropriate page
+        console.log("Signup successful");
+        const userData = response.data;
+        // Save the returned user id (or token) to localStorage.
+        localStorage.setItem("user_id", userData.user_id);
+        console.log("Signed-up user:", userData);
+        navigate("/teams");
+      } else {
+        console.error("Signup failed");
       }
     } catch (error) {
-      console.error('Signup error:', error);
-      alert(error.response?.data?.message || 'Signup failed');
+      console.error("Error:", error);
     }
   };
 
-  // Handle input changes
+  // Handler for the login form submission.
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    // For login, only email and password are needed.
+    const url = `http://localhost:5000/login?email=${formData.email}&password=${formData.password}`;
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        // Save user id (or token) from the response.
+        localStorage.setItem("user_id", user.user_id);
+        console.log("Login successful:", user);
+        navigate("/teams");
+      } else {
+        const data = await response.json();
+        const errorMessage = data.message || "Login failed";
+        setValidationErrors({
+          general: errorMessage,
+          ...(data.message.includes("password") && { password: errorMessage }),
+          ...(data.message.includes("not found") && { email: errorMessage }),
+        });
+      }
+    } catch (error) {
+      setValidationErrors({
+        general: "Error occurred during login",
+      });
+      console.error("Error:", error);
+    }
+  };
+
+  // Handler to update form data when input fields change.
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    // Clear previous validation errors when user types.
+    setValidationErrors({});
+  };
 
-    // Clear specific error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
+  // Handler for switching between different user roles.
+  const handleRoleSwitch = (selectedRole) => {
+    setRole(selectedRole);
+    // Reset form data when role changes.
+    setFormData({
+      fullName: "",
+      email: "",
+      password: "",
+      confirmpassword: "",
+      newpassword: "",
+    });
+  };
+
+  // Handler for switching between login and sign up modes.
+  const handleFormSwitch = () => {
+    setIsLogin(!isLogin);
+    setFormData({
+      fullName: "",
+      email: "",
+      password: "",
+      confirmpassword: "",
+      newpassword: "",
+    });
+    setValidationErrors({});
+  };
+
+  // Open the password reset modal.
+  const handlePasswordResetModal = () => {
+    setIsModalOpen(true);
+  };
+
+  // Close the password reset modal.
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  // Handler for submitting a new password in the reset modal.
+  const handleNewPassword = async (e) => {
+    e.preventDefault();
+    const errors = validatePasswordReset();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    // Use a generic endpoint for password change.
+    const url = "http://localhost:5000/changePassword";
+
+    const data = {
+      email: formData.email,
+      new_password: formData.newpassword,
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.status === 200) {
+        console.log("Password change successful");
+        alert(
+          "Password updated successfully! Please login with your new password."
+        );
+        handleModalClose();
+        return;
+      }
+      if (response.status === 404) {
+        const errorMessage =
+          response.data?.message || "User not found.";
+        setValidationErrors({
+          general: errorMessage,
+          ...(errorMessage.includes("not found") && { email: errorMessage }),
+        });
+        return;
+      }
+    } catch (error) {
+      setValidationErrors({
+        general: "Error occurred during password change",
+      });
+      console.error("Error:", error);
     }
   };
 
-      <form onSubmit={handleSubmit}>
-        <h2>Event System Sign Up</h2>
+  return (
+    <div className="container">
+      {/* Background image */}
+      <img src={backgroundImage} alt="Description" className="image" />
 
-        {/* User Type Selection */}
-        <FormControl fullWidth error={!!errors.userType}>
-          <InputLabel>User Type</InputLabel>
-          <Select
-            name="userType"
-            value={formData.userType}
-            label="User Type"
-            onChange={handleChange}
-          >
-            {Object.keys(userCategories).map(type => (
-              <MenuItem key={type} value={type}>
-                {type}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+      {/* Application title */}
+      <div className="peer-title">
+        <h2>Italian Stallions</h2>
+      </div>
 
-        {/* Category Selection */}
-        {formData.userType && (
-          <FormControl fullWidth error={!!errors.category}>
-            <InputLabel>Category</InputLabel>
-            <Select
-              name="category"
-              value={formData.category}
-              label="Category"
+      {/* Main content area */}
+      <div className="info">
+        {/* Display either Login or Sign Up title based on mode */}
+        <h1>{isLogin ? "Login" : "Sign Up"}</h1>
+
+        {/* Role selection buttons (always visible) */}
+        <div className="button-role">
+          {["organizer", "attendee", "administrator", "stakeholder"].map(
+            (item) => (
+              <button
+                key={item}
+                className={`button ${role === item ? "active" : ""}`}
+                onClick={() => handleRoleSwitch(item)}
+              >
+                {item.charAt(0).toUpperCase() + item.slice(1)}
+              </button>
+            )
+          )}
+        </div>
+
+        {/* Form for login or sign up */}
+        <form onSubmit={isLogin ? handleLogin : handleSignUp}>
+          {/* For sign up mode, show Full Name and Email fields */}
+          {!isLogin && (
+            <>
+              <div>
+                <TextField
+                  className="textfield"
+                  error={!!validationErrors.fullName}
+                  id="filled-full-name"
+                  label="Full Name"
+                  variant="filled"
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  helperText={validationErrors.fullName}
+                  required
+                />
+              </div>
+              <div>
+                <TextField
+                  className="textfield"
+                  error={!!validationErrors.email}
+                  id="filled-email"
+                  label="Email"
+                  variant="filled"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  helperText={validationErrors.email}
+                  required
+                />
+              </div>
+            </>
+          )}
+
+          {/* For login mode, only show Email field */}
+          {isLogin && (
+            <div>
+              <TextField
+                className="textfield"
+                error={!!validationErrors.email}
+                id="filled-email"
+                label="Email"
+                variant="filled"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                helperText={validationErrors.email}
+                required
+              />
+            </div>
+          )}
+
+          {/* Password field (common to both sign up and login) */}
+          <div>
+            <TextField
+              className="textfield"
+              error={!!validationErrors.password}
+              id="filled-password"
+              label="Password"
+              variant="filled"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
               onChange={handleChange}
-            >
-              {userCategories[formData.userType].map(category => (
-                <MenuItem key={category} value={category}>
-                  {category}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
+              helperText={validationErrors.password}
+              required
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={togglePasswordVisibility}
+                      edge="end"
+                      sx={{ boxShadow: "none", padding: 0 }}
+                    >
+                      {showPassword ? (
+                        <VisibilityIcon sx={{ color: "gray", fontSize: "2rem" }} />
+                      ) : (
+                        <VisibilityOffIcon sx={{ color: "gray", fontSize: "2rem" }} />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </div>
 
-        {/* Full Name or Organization Name */}
-        {formData.userType !== 'Stakeholders' ? (
-          <TextField
-            fullWidth
-            name="fullName"
-            label="Full Name"
-            value={formData.fullName}
-            onChange={handleChange}
-            error={!!errors.fullName}
-            helperText={errors.fullName}
-          />
-        ) : (
-          <TextField
-            fullWidth
-            name="organizationName"
-            label="Organization Name"
-            value={formData.organizationName}
-            onChange={handleChange}
-            error={!!errors.organizationName}
-            helperText={errors.organizationName}
-          />
-        )}
+          {/* For sign up mode, add Confirm Password field */}
+          {!isLogin && (
+            <div>
+              <TextField
+                className="textfield"
+                error={!!validationErrors.confirmpassword}
+                id="filled-confirm-password"
+                label="Confirm Password"
+                variant="filled"
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmpassword"
+                value={formData.confirmpassword}
+                onChange={handleChange}
+                helperText={validationErrors.confirmpassword}
+                required
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={toggleConfirmPasswordVisibility}
+                        edge="end"
+                        sx={{ boxShadow: "none", padding: 0 }}
+                      >
+                        {showConfirmPassword ? (
+                          <VisibilityIcon sx={{ color: "gray", fontSize: "2rem" }} />
+                        ) : (
+                          <VisibilityOffIcon sx={{ color: "gray", fontSize: "2rem" }} />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </div>
+          )}
 
-        {/* Email */}
-        <TextField
-          fullWidth
-          name="email"
-          label="Email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          error={!!errors.email}
-          helperText={errors.email}
-        />
+          {/* Submit button changes text based on mode */}
+          <Button type="submit" variant="contained" className="button-signup">
+            {isLogin ? "Login" : "Sign Up"}
+          </Button>
+        </form>
 
-        {/* Password */}
-        <TextField
-          fullWidth
-          name="password"
-          label="Password"
-          type={showPassword ? 'text' : 'password'}
-          value={formData.password}
-          onChange={handleChange}
-          error={!!errors.password}
-          helperText={errors.password}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
+        {/* Prompt to switch between sign up and login modes */}
+        <div className="signup-prompt">
+          {isLogin
+            ? "Don't have an account? "
+            : "Already have an account? "}
+          <span
+            onClick={handleFormSwitch}
+            className="signup-link"
+            style={{
+              cursor: "pointer",
+              color: "#1860C3",
+              textDecoration: "underline",
+            }}
+          >
+            {isLogin ? "Sign Up" : "Login"}
+          </span>
+        </div>
+
+        {/* Link to open password reset modal (only available in login mode) */}
+        <div className="change-password"></div>
+        <span
+          onClick={handlePasswordResetModal}
+          className="password-link"
+          style={{
+            cursor: "pointer",
+            color: "#1860C3",
+            textDecoration: "underline",
           }}
-        />
-
-        {/* Confirm Password */}
-        <TextField
-          fullWidth
-          name="confirmPassword"
-          label="Confirm Password"
-          type={showConfirmPassword ? 'text' : 'password'}
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          error={!!errors.confirmPassword}
-          helperText={errors.confirmPassword}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-
-        <Button 
-          type="submit" 
-          variant="contained" 
-          color="primary" 
-          fullWidth
         >
-          Sign Up
-        </Button>
-      </form>
+          {isLogin ? "Forgot your password? " : ""}
+        </span>
+
+        {/* Password reset modal */}
+        {isModalOpen && (
+          <div className="container-modal" onClick={handleModalClose}>
+            <div
+              className="modal-PSW-content"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2>Change Password</h2>
+              <form onSubmit={handleNewPassword}>
+                {/* Email field for password reset */}
+                <div>
+                  <TextField
+                    className="textfield"
+                    error={!!validationErrors.email}
+                    id="modal-email"
+                    label="Email"
+                    variant="filled"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    helperText={validationErrors.email}
+                    required
+                  />
+                </div>
+                {/* New Password input with toggle */}
+                <div>
+                  <TextField
+                    className="textfield"
+                    error={!!validationErrors.newpassword}
+                    id="modal-new-password"
+                    label="New Password"
+                    variant="filled"
+                    type={showNewPassword ? "text" : "password"}
+                    name="newpassword"
+                    value={formData.newpassword}
+                    onChange={handleChange}
+                    helperText={validationErrors.newpassword}
+                    required
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={toggleNewPasswordVisibility}
+                            edge="end"
+                            sx={{ boxShadow: "none", padding: 0 }}
+                          >
+                            {showNewPassword ? (
+                              <VisibilityIcon sx={{ color: "gray", fontSize: "2rem" }} />
+                            ) : (
+                              <VisibilityOffIcon sx={{ color: "gray", fontSize: "2rem" }} />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </div>
+                {/* Confirm Password input for password reset */}
+                <div>
+                  <TextField
+                    className="textfield"
+                    error={!!validationErrors.confirmpassword}
+                    id="modal-confirm-password"
+                    label="Confirm Password"
+                    variant="filled"
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmpassword"
+                    value={formData.confirmpassword}
+                    onChange={handleChange}
+                    helperText={validationErrors.confirmpassword}
+                    required
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={toggleConfirmPasswordVisibility}
+                            edge="end"
+                            sx={{ boxShadow: "none", padding: 0 }}
+                          >
+                            {showConfirmPassword ? (
+                              <VisibilityIcon sx={{ color: "gray", fontSize: "2rem" }} />
+                            ) : (
+                              <VisibilityOffIcon sx={{ color: "gray", fontSize: "2rem" }} />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </div>
+                {/* Submit button for password reset */}
+                <button className="submitPSW" type="submit">
+                  Submit
+                </button>
+                {/* Button to close the password reset modal */}
+                <button
+                  className="closePSW"
+                  type="button"
+                  onClick={handleModalClose}
+                >
+                  Close
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default SignUp;
