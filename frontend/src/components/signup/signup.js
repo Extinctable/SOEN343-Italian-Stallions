@@ -4,23 +4,32 @@ import backgroundImage from "../Assets/stallion-logo-darkmode.png";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { TextField, InputAdornment, IconButton } from "@mui/material";
+import { TextField, InputAdornment, IconButton, MenuItem } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 const SignUp = () => {
-  // State to track the current selected role among four possibilities.
+  // Mapping of roles to their respective categories
+  const roleCategories = {
+    organizer: ["Event organizers", "Sponsors"],
+    attendee: ["Speakers", "Learners"],
+    administrator: ["Technical personnel", "Executive personnel"],
+    stakeholder: ["Educational institutions", "Event management companies", "Technology providers"],
+  };
+
+  // State to track the current selected role.
   const [role, setRole] = useState("organizer"); // Default role is "organizer"
 
   // State to hold the form data.
-  // For sign up: fullName, email, password, and confirmpassword.
-  // For password change modal, newpassword is used.
+  // For sign up: fullName, email, password, confirmpassword, and category.
+  // For password reset modal, newpassword is used.
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmpassword: "",
     newpassword: "",
+    category: roleCategories["organizer"][0],
   });
 
   // State to determine if the form is in login mode or sign up mode.
@@ -45,7 +54,7 @@ const SignUp = () => {
 
   // Validation function for sign up / registration.
   const validateSignUp = () => {
-    const { fullName, email, password, confirmpassword } = formData;
+    const { fullName, email, password, confirmpassword, category } = formData;
     const errors = {};
 
     // Validate full name (only letters and spaces, between 1 and 100 characters).
@@ -67,6 +76,11 @@ const SignUp = () => {
     // Check that password and confirm password match.
     if (password !== confirmpassword) {
       errors.confirmpassword = "Passwords do not match.";
+    }
+
+    // Ensure a category is selected.
+    if (!category) {
+      errors.category = "Please select a category.";
     }
 
     return errors;
@@ -105,11 +119,12 @@ const SignUp = () => {
       return;
     }
 
-    // Use a generic signup endpoint and send the role along with the other fields.
+    // Use a generic signup endpoint and send the role, category, and other fields.
     const url = "http://localhost:5000/signup";
     try {
       const response = await axios.post(url, {
         role, // role is one of: organizer, attendee, administrator, stakeholder
+        category: formData.category,
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
@@ -179,13 +194,14 @@ const SignUp = () => {
   // Handler for switching between different user roles.
   const handleRoleSwitch = (selectedRole) => {
     setRole(selectedRole);
-    // Reset form data when role changes.
+    // Reset form data when role changes and set default category for the new role.
     setFormData({
       fullName: "",
       email: "",
       password: "",
       confirmpassword: "",
       newpassword: "",
+      category: roleCategories[selectedRole][0],
     });
   };
 
@@ -198,6 +214,8 @@ const SignUp = () => {
       password: "",
       confirmpassword: "",
       newpassword: "",
+      // For sign up mode, set default category based on current role.
+      category: roleCategories[role][0],
     });
     setValidationErrors({});
   };
@@ -295,7 +313,7 @@ const SignUp = () => {
 
         {/* Form for login or sign up */}
         <form onSubmit={isLogin ? handleLogin : handleSignUp}>
-          {/* For sign up mode, show Full Name and Email fields */}
+          {/* For sign up mode, show Full Name, Email and Category fields */}
           {!isLogin && (
             <>
               <div>
@@ -327,6 +345,26 @@ const SignUp = () => {
                   helperText={validationErrors.email}
                   required
                 />
+              </div>
+              {/* Category dropdown */}
+              <div>
+                <TextField
+                  select
+                  className="textfield"
+                  label="Category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  variant="filled"
+                  helperText={validationErrors.category}
+                  required
+                >
+                  {roleCategories[role].map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </div>
             </>
           )}

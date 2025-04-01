@@ -7,14 +7,16 @@
     justify-content: center;
     width: fit-content;
     margin: auto;
-    height: 60vh;
+    height: 100vh;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 20px;
     background-color: white;
-    margin-top: 10vh; /* Reduced top margin */
-    width: 55%;
-    max-width: 1200px !important;
-    min-height: 600px;
+    margin-top: 5h;
+    /* Debug: Increased container width and max-width */
+    width: 80%; /* Was 55% */
+    max-width: 1400px; /* Was 1200px */
+    /* Debug: Increased container minimum height to accommodate additional sign-up elements */
+    min-height: 800px; /* Was 600px */
   }
   
   /* Title styling within container */
@@ -27,7 +29,7 @@
   /* Role selection buttons container */
   .button-role {
     position: absolute;
-    top: 15%; /* Moved upward */
+    top: 20%;
     right: 58%;
     display: flex;
     flex-direction: column;
@@ -37,7 +39,7 @@
   /* Individual role button styling */
   .button {
     display: block;
-    margin: 10px 0; /* Reduced space between buttons */
+    margin: 10px 0;
     padding: 30px 40px;
     border: none;
     border-radius: 20px;
@@ -260,4 +262,4 @@
       display: none;
     }
   }
-    
+  
