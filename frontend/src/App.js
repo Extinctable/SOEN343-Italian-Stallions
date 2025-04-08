@@ -7,7 +7,7 @@ import HeaderExport from "./Components/Header/HeaderExport";
 import Footer from "./Components/Footer/Footer";
 import NavBar from "./Components/NavBar";
 import LoginForm from "./Components/LoginForm";
-import SignUp from "./Components/SignUp/SignUp"; // First sign up page
+import SignUp from "./Components/SignUp/SignUp.js"; // First sign up page
 import SignUpLogin from "./Components/SignUpLogin/SignUpLogin"; // Sign up and login together
 import AboutUs from "./Components/AboutUsPage/AboutUs";
 import Contact from "./Components/Contact/Contact";
@@ -16,6 +16,9 @@ import Message from "./Components/Message/Message";
 import Network from "./Components/Network/Network";
 import HomePage from "./Components/HomePage/HomePage.jsx";
 import AccountSettings from "./Components/AccountSettings/AccountSettings";
+import FinancialManager from "./Components/Finance/FinancialManager.jsx";
+import EventManager from "./Components/Events/EventManager.jsx";
+
 
 import { UserProvider } from "./context/UserContext"; 
 
@@ -64,6 +67,8 @@ function MainLayout() {
             <Route path="/Account" element={<AccountSettings />} />
             <Route path="/network" element={<Network />} />
             <Route path="/message" element={<Message />} />
+            <Route path="/FinancialManager" element={<FinancialManager />} />
+            <Route path="/EventManager" element={<EventManager />} />
           </Routes>
         </div>
       )}

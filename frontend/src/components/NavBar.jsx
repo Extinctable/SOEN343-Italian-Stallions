@@ -98,6 +98,20 @@ function NavBar() {
               </NavLink>
             </li>
 
+            <li className="nav-link">
+              <NavLink to="/FinancialManager" className={({ isActive }) => (isActive ? "active-link" : "")}>
+              <i className="bx bx-dollar-circle icon"></i>
+                <span className="text nav-text">Finance</span>
+              </NavLink>
+            </li>
+
+            <li className="nav-link">
+              <NavLink to="/EventManager" className={({ isActive }) => (isActive ? "active-link" : "")}>
+              <i className="bx bx-calendar icon"></i>
+                <span className="text nav-text">Events</span>
+              </NavLink>
+            </li>
+
           </ul>
         </div>
 
