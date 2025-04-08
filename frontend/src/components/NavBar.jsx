@@ -118,7 +118,7 @@ function NavBar() {
         {/* BOTTOM CONTENT (Logout + Dark Mode Switch) */}
         <div className="bottom-content">
           <li>
-            <a href="/login">
+            <a href="/signup">
               <i className="bx bx-log-out icon"></i>
               <span className="text nav-text">Logout</span>
             </a>
