@@ -1,6 +1,6 @@
 import React from "react";
+import HeaderExport from "../Header/HeaderExport";
 import "./AboutUs.css"; 
-import Main from "../Header/HeaderMain";
 
 
 const AboutUs = () => {
@@ -40,10 +40,11 @@ const AboutUs = () => {
   return (
     
     <div className="about-us">
-       {/* <div className="about-us-header">
-        < Main />
+
+       <div className="header">
+        < HeaderExport />
       </div>
-      */}
+  
       <section className="company-description">
         <h1>About Us</h1>
         <p>

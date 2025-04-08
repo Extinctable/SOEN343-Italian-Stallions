@@ -10,10 +10,10 @@
 
 /* Styles for smaller screens */
 @media screen and (max-width: 749px) { /* Assuming $medium-down is 750px - 1 */
-    .header {
-        background: var(--color-white);
-        box-shadow: 0 5px 30px 0 rgba(0, 0, 0, 0.20);
-    }
+    /* .header {
+         background: var(--color-white); 
+        box-shadow: 0 5px 30px 0 rgba(0, 0, 0, 0.20); 
+    } */
 }
 
 .header__wrapper {
