@@ -17,7 +17,7 @@ const navigation = [
   {
     id: "2836aafa-6733-4b25-a908-ffca75b3e84f",
     name: "Sign in",
-    slug: "login", 
+    slug: "signup", 
   }
 ];
 

@@ -9,7 +9,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 const SignUp = () => {
-  // Mapping of roles to their respective categories
+  // Mapping of roles to their respective categories.
   const roleCategories = {
     organizer: ["Event organizers", "Sponsors"],
     attendee: ["Speakers", "Learners"],
@@ -17,12 +17,10 @@ const SignUp = () => {
     stakeholder: ["Educational institutions", "Event management companies", "Technology providers"],
   };
 
-  // State to track the current selected role.
-  const [role, setRole] = useState("organizer"); // Default role is "organizer"
-
-  // State to hold the form data.
-  // For sign up: fullName, email, password, confirmpassword, and category.
-  // For password reset modal, newpassword is used.
+  // State to track the currently selected role.
+  const [role, setRole] = useState("organizer"); // Default role.
+  
+  // State to hold form data.
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -32,53 +30,46 @@ const SignUp = () => {
     category: roleCategories["organizer"][0],
   });
 
-  // State to determine if the form is in login mode or sign up mode.
+  // Boolean state for toggling between login and sign up modes.
   const [isLogin, setIsLogin] = useState(false);
-  // State for holding form validation errors.
+  // Object to hold any validation errors.
   const [validationErrors, setValidationErrors] = useState({});
-  // State to control the visibility of the password change modal.
+  // State for controlling visibility of the password reset modal.
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // States to toggle password visibility for the various password fields.
+  // States to toggle password visibility.
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  // Toggle functions for each password visibility state.
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
-  const toggleConfirmPasswordVisibility = () =>
-    setShowConfirmPassword(!showConfirmPassword);
-  const toggleNewPasswordVisibility = () =>
-    setShowNewPassword(!showNewPassword);
-
   const navigate = useNavigate();
 
-  // Validation function for sign up / registration.
+  // Toggle functions for showing/hiding passwords.
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+  const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
+  const toggleNewPasswordVisibility = () => setShowNewPassword(!showNewPassword);
+
+  // Validate sign up form inputs.
   const validateSignUp = () => {
     const { fullName, email, password, confirmpassword, category } = formData;
     const errors = {};
 
-    // Validate full name (only letters and spaces, between 1 and 100 characters).
     if (!/^[a-zA-Z\s]{1,100}$/.test(fullName)) {
       errors.fullName = "Full name is not valid";
     }
 
-    // Basic email validation.
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = "Email is not valid";
     }
 
-    // Validate password strength: at least 8 characters, with at least one letter and one number.
     if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)) {
       errors.password =
         "Password must be at least 8 characters, including at least one letter and one number.";
     }
 
-    // Check that password and confirm password match.
     if (password !== confirmpassword) {
       errors.confirmpassword = "Passwords do not match.";
     }
 
-    // Ensure a category is selected.
     if (!category) {
       errors.category = "Please select a category.";
     }
@@ -86,23 +77,20 @@ const SignUp = () => {
     return errors;
   };
 
-  // Validation function for password reset.
+  // Validate password reset inputs.
   const validatePasswordReset = () => {
     const { email, newpassword, confirmpassword } = formData;
     const errors = {};
 
-    // Validate email.
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = "Email is not valid";
     }
 
-    // Validate new password.
     if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(newpassword)) {
       errors.newpassword =
         "New password must be at least 8 characters, including at least one letter and one number.";
     }
 
-    // Check that new password and confirm password match.
     if (newpassword !== confirmpassword) {
       errors.confirmpassword = "Passwords do not match.";
     }
@@ -110,7 +98,7 @@ const SignUp = () => {
     return errors;
   };
 
-  // Handler for the sign up form submission.
+  // Handler for sign up submissions.
   const handleSignUp = async (e) => {
     e.preventDefault();
     const errors = validateSignUp();
@@ -119,48 +107,42 @@ const SignUp = () => {
       return;
     }
 
-    // Use a generic signup endpoint and send the role, category, and other fields.
-    const url = "http://localhost:5000/signup";
+    // Use the updated signup endpoint (port 5002).
+    const url = "http://localhost:5002/signup";
     try {
       const response = await axios.post(url, {
-        role, // role is one of: organizer, attendee, administrator, stakeholder
+        role, // e.g., "organizer", "attendee", etc.
         category: formData.category,
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
       });
 
-      if (response.status === 200) {
+      if (response.status === 201) {
         console.log("Signup successful");
-        const userData = response.data;
-        // Save the returned user id (or token) to localStorage.
-        localStorage.setItem("user_id", userData.user_id);
-        console.log("Signed-up user:", userData);
+        // Save any user data as needed (e.g., user ID or token).
         navigate("/teams");
       } else {
         console.error("Signup failed");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error during signup:", error);
     }
   };
 
-  // Handler for the login form submission.
+  // Handler for login submissions.
   const handleLogin = async (e) => {
     e.preventDefault();
-    // For login, only email and password are needed.
-    const url = `http://localhost:5000/login?email=${formData.email}&password=${formData.password}`;
+    // Include the selected role when sending the login request.
+    const url = `http://localhost:5002/login?email=${formData.email}&password=${formData.password}&role=${role}`;
     try {
       const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
 
       if (response.ok) {
         const user = await response.json();
-        // Save user id (or token) from the response.
         localStorage.setItem("user_id", user.user_id);
         console.log("Login successful:", user);
         navigate("/teams");
@@ -169,32 +151,28 @@ const SignUp = () => {
         const errorMessage = data.message || "Login failed";
         setValidationErrors({
           general: errorMessage,
-          ...(data.message.includes("password") && { password: errorMessage }),
-          ...(data.message.includes("not found") && { email: errorMessage }),
+          ...(errorMessage.includes("password") && { password: errorMessage }),
+          ...(errorMessage.includes("not found") && { email: errorMessage }),
         });
       }
     } catch (error) {
-      setValidationErrors({
-        general: "Error occurred during login",
-      });
-      console.error("Error:", error);
+      setValidationErrors({ general: "Error occurred during login" });
+      console.error("Error during login:", error);
     }
   };
 
-  // Handler to update form data when input fields change.
+  // Update formData as the user types.
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Clear previous validation errors when user types.
     setValidationErrors({});
   };
 
-  // Handler for switching between different user roles.
+  // Change the active role and reset the form.
   const handleRoleSwitch = (selectedRole) => {
     setRole(selectedRole);
-    // Reset form data when role changes and set default category for the new role.
     setFormData({
       fullName: "",
       email: "",
@@ -205,7 +183,7 @@ const SignUp = () => {
     });
   };
 
-  // Handler for switching between login and sign up modes.
+  // Toggle between sign up and login modes.
   const handleFormSwitch = () => {
     setIsLogin(!isLogin);
     setFormData({
@@ -214,7 +192,6 @@ const SignUp = () => {
       password: "",
       confirmpassword: "",
       newpassword: "",
-      // For sign up mode, set default category based on current role.
       category: roleCategories[role][0],
     });
     setValidationErrors({});
@@ -230,7 +207,7 @@ const SignUp = () => {
     setIsModalOpen(false);
   };
 
-  // Handler for submitting a new password in the reset modal.
+  // Handler for password reset submissions.
   const handleNewPassword = async (e) => {
     e.preventDefault();
     const errors = validatePasswordReset();
@@ -239,9 +216,7 @@ const SignUp = () => {
       return;
     }
 
-    // Use a generic endpoint for password change.
-    const url = "http://localhost:5000/changePassword";
-
+    const url = "http://localhost:5002/changePassword"; // This endpoint should be implemented on your server.
     const data = {
       email: formData.email,
       new_password: formData.newpassword,
@@ -250,34 +225,24 @@ const SignUp = () => {
     try {
       const response = await fetch(url, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (response.status === 200) {
         console.log("Password change successful");
-        alert(
-          "Password updated successfully! Please login with your new password."
-        );
+        alert("Password updated successfully! Please login with your new password.");
         handleModalClose();
-        return;
-      }
-      if (response.status === 404) {
-        const errorMessage =
-          response.data?.message || "User not found.";
+      } else if (response.status === 404) {
+        const errorMessage = (await response.json()).message || "User not found.";
         setValidationErrors({
           general: errorMessage,
           ...(errorMessage.includes("not found") && { email: errorMessage }),
         });
-        return;
       }
     } catch (error) {
-      setValidationErrors({
-        general: "Error occurred during password change",
-      });
-      console.error("Error:", error);
+      setValidationErrors({ general: "Error occurred during password change" });
+      console.error("Error during password change:", error);
     }
   };
 
@@ -293,27 +258,24 @@ const SignUp = () => {
 
       {/* Main content area */}
       <div className="info">
-        {/* Display either Login or Sign Up title based on mode */}
+        {/* Display title based on mode */}
         <h1>{isLogin ? "Login" : "Sign Up"}</h1>
 
-        {/* Role selection buttons (always visible) */}
+        {/* Role selection panel */}
         <div className="button-role">
-          {["organizer", "attendee", "administrator", "stakeholder"].map(
-            (item) => (
-              <button
-                key={item}
-                className={`button ${role === item ? "active" : ""}`}
-                onClick={() => handleRoleSwitch(item)}
-              >
-                {item.charAt(0).toUpperCase() + item.slice(1)}
-              </button>
-            )
-          )}
+          {["organizer", "attendee", "administrator", "stakeholder"].map((item) => (
+            <button
+              key={item}
+              className={`button ${role === item ? "active" : ""}`}
+              onClick={() => handleRoleSwitch(item)}
+            >
+              {item.charAt(0).toUpperCase() + item.slice(1)}
+            </button>
+          ))}
         </div>
 
-        {/* Form for login or sign up */}
+        {/* Form for login/sign up */}
         <form onSubmit={isLogin ? handleLogin : handleSignUp}>
-          {/* For sign up mode, show Full Name, Email and Category fields */}
           {!isLogin && (
             <>
               <div>
@@ -369,7 +331,6 @@ const SignUp = () => {
             </>
           )}
 
-          {/* For login mode, only show Email field */}
           {isLogin && (
             <div>
               <TextField
@@ -388,7 +349,7 @@ const SignUp = () => {
             </div>
           )}
 
-          {/* Password field (common to both sign up and login) */}
+          {/* Password field */}
           <div>
             <TextField
               className="textfield"
@@ -405,11 +366,7 @@ const SignUp = () => {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={togglePasswordVisibility}
-                      edge="end"
-                      sx={{ boxShadow: "none", padding: 0 }}
-                    >
+                    <IconButton onClick={togglePasswordVisibility} edge="end" sx={{ boxShadow: "none", padding: 0 }}>
                       {showPassword ? (
                         <VisibilityIcon sx={{ color: "gray", fontSize: "2rem" }} />
                       ) : (
@@ -422,7 +379,7 @@ const SignUp = () => {
             />
           </div>
 
-          {/* For sign up mode, add Confirm Password field */}
+          {/* Confirm Password for sign up */}
           {!isLogin && (
             <div>
               <TextField
@@ -440,11 +397,7 @@ const SignUp = () => {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        onClick={toggleConfirmPasswordVisibility}
-                        edge="end"
-                        sx={{ boxShadow: "none", padding: 0 }}
-                      >
+                      <IconButton onClick={toggleConfirmPasswordVisibility} edge="end" sx={{ boxShadow: "none", padding: 0 }}>
                         {showConfirmPassword ? (
                           <VisibilityIcon sx={{ color: "gray", fontSize: "2rem" }} />
                         ) : (
@@ -458,40 +411,28 @@ const SignUp = () => {
             </div>
           )}
 
-          {/* Submit button changes text based on mode */}
           <Button type="submit" variant="contained" className="button-signup">
             {isLogin ? "Login" : "Sign Up"}
           </Button>
         </form>
 
-        {/* Prompt to switch between sign up and login modes */}
+        {/* Mode switch prompt */}
         <div className="signup-prompt">
-          {isLogin
-            ? "Don't have an account? "
-            : "Already have an account? "}
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
           <span
             onClick={handleFormSwitch}
             className="signup-link"
-            style={{
-              cursor: "pointer",
-              color: "#1860C3",
-              textDecoration: "underline",
-            }}
+            style={{ cursor: "pointer", color: "#1860C3", textDecoration: "underline" }}
           >
             {isLogin ? "Sign Up" : "Login"}
           </span>
         </div>
 
-        {/* Link to open password reset modal (only available in login mode) */}
-        <div className="change-password"></div>
+        {/* Password reset link (visible only in login mode) */}
         <span
           onClick={handlePasswordResetModal}
           className="password-link"
-          style={{
-            cursor: "pointer",
-            color: "#1860C3",
-            textDecoration: "underline",
-          }}
+          style={{ cursor: "pointer", color: "#1860C3", textDecoration: "underline" }}
         >
           {isLogin ? "Forgot your password? " : ""}
         </span>
@@ -499,13 +440,9 @@ const SignUp = () => {
         {/* Password reset modal */}
         {isModalOpen && (
           <div className="container-modal" onClick={handleModalClose}>
-            <div
-              className="modal-PSW-content"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="modal-PSW-content" onClick={(e) => e.stopPropagation()}>
               <h2>Change Password</h2>
               <form onSubmit={handleNewPassword}>
-                {/* Email field for password reset */}
                 <div>
                   <TextField
                     className="textfield"
@@ -521,7 +458,6 @@ const SignUp = () => {
                     required
                   />
                 </div>
-                {/* New Password input with toggle */}
                 <div>
                   <TextField
                     className="textfield"
@@ -538,11 +474,7 @@ const SignUp = () => {
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
-                          <IconButton
-                            onClick={toggleNewPasswordVisibility}
-                            edge="end"
-                            sx={{ boxShadow: "none", padding: 0 }}
-                          >
+                          <IconButton onClick={toggleNewPasswordVisibility} edge="end" sx={{ boxShadow: "none", padding: 0 }}>
                             {showNewPassword ? (
                               <VisibilityIcon sx={{ color: "gray", fontSize: "2rem" }} />
                             ) : (
@@ -554,7 +486,6 @@ const SignUp = () => {
                     }}
                   />
                 </div>
-                {/* Confirm Password input for password reset */}
                 <div>
                   <TextField
                     className="textfield"
@@ -571,11 +502,7 @@ const SignUp = () => {
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
-                          <IconButton
-                            onClick={toggleConfirmPasswordVisibility}
-                            edge="end"
-                            sx={{ boxShadow: "none", padding: 0 }}
-                          >
+                          <IconButton onClick={toggleConfirmPasswordVisibility} edge="end" sx={{ boxShadow: "none", padding: 0 }}>
                             {showConfirmPassword ? (
                               <VisibilityIcon sx={{ color: "gray", fontSize: "2rem" }} />
                             ) : (
@@ -587,16 +514,8 @@ const SignUp = () => {
                     }}
                   />
                 </div>
-                {/* Submit button for password reset */}
-                <button className="submitPSW" type="submit">
-                  Submit
-                </button>
-                {/* Button to close the password reset modal */}
-                <button
-                  className="closePSW"
-                  type="button"
-                  onClick={handleModalClose}
-                >
+                <button className="submitPSW" type="submit">Submit</button>
+                <button className="closePSW" type="button" onClick={handleModalClose}>
                   Close
                 </button>
               </form>
