@@ -7,6 +7,7 @@ import axios from "axios";
 import { TextField, InputAdornment, IconButton, MenuItem } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { useUser } from "../../context/UserContext";
 
 const SignUp = () => {
   // Mapping of roles to their respective categories.
@@ -42,6 +43,7 @@ const SignUp = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useUser();
 
   // Toggle functions for showing/hiding passwords.
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -133,17 +135,17 @@ const SignUp = () => {
   // Handler for login submissions.
   const handleLogin = async (e) => {
     e.preventDefault();
-    // Include the selected role when sending the login request.
     const url = `http://localhost:5002/login?email=${formData.email}&password=${formData.password}&role=${role}`;
+  
     try {
       const response = await fetch(url, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
-
+  
       if (response.ok) {
         const user = await response.json();
-        localStorage.setItem("user_id", user.user_id);
+        login(user); // ✅ this updates context and localStorage (in your context logic)
         console.log("Login successful:", user);
         navigate("/teams");
       } else {
@@ -160,6 +162,7 @@ const SignUp = () => {
       console.error("Error during login:", error);
     }
   };
+  
 
   // Update formData as the user types.
   const handleChange = (e) => {

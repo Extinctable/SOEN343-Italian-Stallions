@@ -43,7 +43,7 @@ function NavBar() {
         <div className="image-text">
           <span className="image">
            
-          <img src={darkMode ? "/stallion-logo-darkmode.png" : "/stallion-logo.webp"} alt="Stallion Logo" />
+          <img src={darkMode ? "./Assets/stallion-logo-darkmode.png" : "./Assets/stallion-logo.webp"} alt="Stallion Logo" />
           </span>
           <div className="text logo-text">
             <span className="name">StallionSpeaks</span>
@@ -57,7 +57,7 @@ function NavBar() {
           {/* MENU LINKS */}
           <ul className="menu-links">
             <li className="nav-link">
-              <NavLink to="/" className={({ isActive }) => (isActive ? "active-link" : "")}>
+              <NavLink to="/home" className={({ isActive }) => (isActive ? "active-link" : "")}>
                 <i className="bx bx-home-alt icon"></i>
                 <span className="text nav-text">Home</span>
               </NavLink>
@@ -118,7 +118,7 @@ function NavBar() {
         {/* BOTTOM CONTENT (Logout + Dark Mode Switch) */}
         <div className="bottom-content">
           <li>
-            <a href="/signup">
+            <a href="/landing">
               <i className="bx bx-log-out icon"></i>
               <span className="text nav-text">Logout</span>
             </a>

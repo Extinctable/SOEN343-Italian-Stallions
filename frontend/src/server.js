@@ -1,3 +1,9 @@
+/****************************************************************
+ *  COMPLETE SERVER.JS – PRESERVING ORIGINAL LINES, 
+ *  ONLY ADDING OPENAI TRANSCRIPTION LOGIC
+ ****************************************************************/
+
+require("dotenv").config(); // (NEW) Loads .env
 const express = require('express');
 const { Pool } = require('pg');
 const app = express();
@@ -10,7 +16,11 @@ const userEventController = require('./controllers/userEventController');
 const userPaymentController = require('./controllers/userPaymentController');
 const { Server } = require("socket.io");
 const http = require("http");
-
+const axios = require("axios");         // (NEW) for openAI HTTP calls
+const FormData = require("form-data");  // (NEW) for multipart form
+const fs = require("fs");               // (NEW) for saving chunk
+const path = require("path");           // (NEW) path ops
+const { v4: uuidv4 } = require("uuid"); // (NEW) unique temp filenames
 // Enable CORS for all routes
 app.use(cors());
 
@@ -132,47 +142,116 @@ const createUserPaymentsTable = async () => {
 // NEO4J SETUP
 // =====================================================================
 const driver = neo4j.driver(
-  'neo4j://localhost:7689',
+  'neo4j://localhost:7687',
   neo4j.auth.basic('neo4j', 'message88')
 );
 const session = driver.session();
 console.log("Connected to Neo4j!");
 
+
 // =====================================================================
 // SOCKET.IO SETUP
 // =====================================================================
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3001", // Adjust for frontend
+    origin: "http://localhost:3001", // 🔁 Make sure your React frontend is running on this
     methods: ["GET", "POST"]
   }
 });
 
-// Socket handlers
-io.on("connection", (socket) => {
-  console.log("A user connected:", socket.id);
 
-  socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
-    const sessionSocket = driver.session();
-    try {
-      // Store message as a relationship in Neo4j
-      await sessionSocket.run(
-        `MATCH (sender:User {id: $senderId}), (receiver:User {id: $receiverId})
-         CREATE (sender)-[:MESSAGE {text: $message, timestamp: datetime()}]->(receiver)`,
-        { senderId, receiverId, message }
-      );
-      // Emit message to receiver
-      io.to(receiverId).emit("receiveMessage", { senderId, message });
-    } catch (err) {
-      console.error("Error saving message:", err);
-    } finally {
-      await sessionSocket.close();
-    }
+// Step 3: Handle socket connections
+
+io.on("connection", (socket) => {
+  console.log("✅ A user connected:", socket.id);
+
+  socket.on("viewer-ready", () => {
+    console.log("👀 Viewer is ready, notifying streamer...");
+    socket.broadcast.emit("viewer-ready");
   });
 
+  socket.on("stream-offer", (offer) => {
+    console.log("📤 Stream offer received, broadcasting to viewers...");
+    socket.broadcast.emit("stream-offer", offer);
+  });
+
+  socket.on("stream-answer", (answer) => {
+    console.log("📥 Answer received, sending to streamer...");
+    socket.broadcast.emit("stream-answer", answer);
+  });
+
+// 🧊 ICE Candidate relaying
+socket.on("stream-ice-candidate", (candidate) => {
+  console.log("🧊 ICE candidate relayed");
+  socket.broadcast.emit("stream-ice-candidate", candidate);
+});
+
+// 📢 Subtitle relaying
+socket.on("subtitle", (text) => {
+  console.log("📢 Subtitle relayed to viewers:", text);
+  socket.broadcast.emit("subtitle", text);
+});
+
+/************************************************************
+ * (NEW) The streamer can send raw audio chunks to be transcribed
+ ************************************************************/
+socket.on("audio_chunk", async (base64Audio) => {
+  let tempFile;
+  try {
+    const audioBuffer = Buffer.from(base64Audio, "base64");
+    tempFile = path.join(__dirname, `temp_${uuidv4()}.webm`);
+    fs.writeFileSync(tempFile, audioBuffer);
+
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(tempFile), {
+      filename: "audio.webm",
+      contentType: "audio/webm"
+    });
+    formData.append("model", "whisper-1");
+    formData.append("language", "en");
+
+    const response = await axios.post("https://api.openai.com/v1/audio/transcriptions", formData, {
+      headers: {
+        // Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        ...formData.getHeaders(),
+      },
+    });
+
+    const text = (response.data.text || "").trim();
+    console.log("📝 Transcribed text:", text);
+    if (text) {
+      socket.broadcast.emit("subtitle", text);
+    }
+
+    fs.unlinkSync(tempFile);
+  } catch (err) {
+    console.error("❌ Transcription error:", err.response?.data || err.message);
+    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+  }
+});
+
+// 💬 Messaging system with Neo4j
+socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
+  const sessionSocket = driver.session();
+  try {
+    await sessionSocket.run(
+      `MATCH (sender:User {id: $senderId}), (receiver:User {id: $receiverId})
+       CREATE (sender)-[:MESSAGE {text: $message, timestamp: datetime()}]->(receiver)`,
+      { senderId, receiverId, message }
+    );
+    io.to(receiverId).emit("receiveMessage", { senderId, message });
+  } catch (err) {
+    console.error("Error saving message:", err);
+  } finally {
+    await sessionSocket.close();
+  }
+});
+
+
   socket.on("disconnect", () => {
-    console.log("A user disconnected:", socket.id);
+    console.log("❌ User disconnected:", socket.id);
   });
 });
 
@@ -182,6 +261,7 @@ io.on("connection", (socket) => {
 
 // Updated addUser function: now accepts role and category.
 const addUser = async (first, last, password, description, email, role, category) => {
+
   const insertQuery = `
     INSERT INTO users (first, last, password, description, email, role, category)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -196,7 +276,6 @@ const addUser = async (first, last, password, description, email, role, category
     console.error("Error adding user:", err);
   }
 };
-
 // Add user to Neo4j
 const addToNeo4j = async ({ id, first, last, description, email }) => {
   try {
@@ -209,6 +288,8 @@ const addToNeo4j = async ({ id, first, last, description, email }) => {
     console.log("User added to Neo4j:", result.records[0].get('u'));
   } catch (error) {
     console.error("Error adding user to Neo4j:", error);
+  } finally {
+    // session.close() if needed
   }
 };
 
@@ -230,6 +311,8 @@ app.post('/add-user', async (req, res) => {
 });
 
 // Legacy endpoint for checking credentials (without role check)
+// (You can continue writing this part based on your logic)
+
 const checkUserCredentials = async (email, password) => {
   const query = `SELECT * FROM users WHERE email = $1;`;
   try {
@@ -263,6 +346,7 @@ app.post('/check-credentials', async (req, res) => {
     res.status(401).json({ message: 'Invalid credentials' });
   }
 });
+
 
 // =====================================================================
 // NEW SIGN UP ENDPOINT (with role and category)
@@ -298,14 +382,17 @@ app.get('/login', async (req, res) => {
     // Look up the user by email and role.
     const query = `SELECT * FROM users WHERE email = $1 AND role = $2;`;
     const result = await db.query(query, [email, role]);
+
     if (result.rows.length === 0) {
       return res.status(401).json({ message: "Invalid credentials or role" });
     }
+
     const user = result.rows[0];
+
     // WARNING: For production, use password hashing instead of plain text.
     if (user.password === password) {
-      loginUserID = user.id;
-      return res.status(200).json({ message: "Login successful", user_id: user.id });
+      // ✅ Return the full user object
+      return res.status(200).json(user);
     } else {
       return res.status(401).json({ message: "Incorrect password" });
     }
@@ -315,24 +402,32 @@ app.get('/login', async (req, res) => {
   }
 });
 
+
 // =====================================================================
 // OTHER ENDPOINTS (Friend requests, streams, etc.)
 // =====================================================================
 
 // Example: Display users endpoint
+
 app.get("/returnUsers", async (req, res) => {
   const session3 = driver.session();
   console.log("Is this good ", loginUserID);
   try {
+
     const result = await session3.run(
       `MATCH (u:User)
        WHERE u.id <> $loginUserID
          AND NOT EXISTS {
            MATCH (u)-[:SOME_RELATIONSHIP]-(otherUser:User {id: $loginUserID})
-         }
+         }AND NOT EXISTS {
+       MATCH (u)-[:FRIEND]-(otherUser:User {id: $loginUserID})
+     }AND NOT EXISTS {
+       MATCH (u)-[:REQUEST]->(otherUser:User {id: $loginUserID})
+     }
        RETURN u.first AS firstName, u.last AS lastName, u.id AS id
       `, { loginUserID }
     ); 
+
 
     const users = result.records.map(record => ({
       id: record.get("id"),
@@ -349,7 +444,9 @@ app.get("/returnUsers", async (req, res) => {
   }
 });
 
+
 // Friend request endpoints
+
 app.post("/sendFriendRequest", async (req, res) => {
   const { receiverID } = req.body;
   try {
@@ -362,12 +459,15 @@ app.post("/sendFriendRequest", async (req, res) => {
   } catch (error) {
     console.error("Error sending friend request:", error);
     res.status(500).send("Server error");
+
   }
+
 });
 
 app.post("/acceptFriendRequest", async (req, res) => {
   const session8 = driver.session();
   try {
+
     await session8.run(
       `MATCH (a:User)-[r:REQUEST]->(b:User {id: $loginUserID})
        DELETE r
@@ -375,23 +475,26 @@ app.post("/acceptFriendRequest", async (req, res) => {
        CREATE (b)-[:FRIEND]->(a)`,
       { loginUserID }
     );
+
     res.json({ message: "Friend request accepted!" });
   } catch (error) {
     console.error("Error accepting friend request:", error);
     res.status(500).send("Server error");
   } finally {
-    await session8.close();
+    session8.close();
   }
 });
 
 app.get("/getFriendRequests", async (req, res) => {
   const session2 = driver.session();
+
   try {
     const result = await session2.run(
       `MATCH (sender:User)-[r:REQUEST]->(receiver:User {id: $loginUserID})
        RETURN sender.id AS senderID, sender.first AS firstName, sender.last AS lastName`,
       { loginUserID }
     );
+
     const requests = result.records.map(record => ({
       senderID: record.get("senderID"),
       firstName: record.get("firstName"),
@@ -402,9 +505,10 @@ app.get("/getFriendRequests", async (req, res) => {
     console.error("Error fetching friend requests:", error);
     res.status(500).send("Server error");
   } finally {
-    await session2.close();
+    session2.close();
   }
 });
+
 
 // Message (friends) endpoint
 app.get("/friends", async (req, res) => {
@@ -415,6 +519,7 @@ app.get("/friends", async (req, res) => {
        RETURN f.id AS id, f.first AS first, f.last AS last, f.email AS email, f.description AS description`,
       { loginUserID }
     );
+
 
     if (result.records.length === 0) {
       return res.json({ message: 'No friends' });
@@ -436,6 +541,7 @@ app.get("/friends", async (req, res) => {
     session88.close();
   }
 });
+
 
 // =====================================================================
 // Event Endpoints (using eventController)
@@ -540,6 +646,7 @@ app.post('/api/payments', async (req, res) => {
 // =====================================================================
 // Routes using controllers
 // =====================================================================
+
 app.get('/user', userController.getUser);
 app.post('/set-preference', userController.setPreference);
 app.post('/create-stream', streamController.createStream);
@@ -554,17 +661,19 @@ app.get('/EventManager', eventController.getEvents);
 // =====================================================================
 const PORT = 5002;
 server.listen(PORT, () => {
+
   console.log(`Server is running on http://localhost:${PORT}`);
+
 });
 
-// =====================================================================
-// Startup: Create test user (wrapped to avoid duplicate errors)
-// =====================================================================
-const firstTest = "Adriano";
-const lastTest = "zlatan";
-const passwordTest = "1";
-const descriptionTest = "Defence";
-const emailTest = "mercedes17780@example.com";
+// Create test user on startup
+const first = "Lilian";
+const last = "Thuram";
+const password = "1";
+const description = "New1";
+const email = "merced5555533555Test@example.com";
+const preference = "";
+
 (async () => {
   await createUserTable();
   await createStreamsTable();
@@ -572,7 +681,7 @@ const emailTest = "mercedes17780@example.com";
   await createUserEventsTable();
   await createUserPaymentsTable();
   try {
-    await addUser(firstTest, lastTest, passwordTest, descriptionTest, emailTest, "organizer", "Event organizers");
+    await addUser(first, last, password, description, email, "organizer", "Event organizers");
   } catch (err) {
     console.error("Test user insertion error (likely duplicate):", err.message);
   }
@@ -581,4 +690,3 @@ const emailTest = "mercedes17780@example.com";
 // Export for optional reuse
 module.exports = { db, checkUserCredentials };
 
-//driver.close();

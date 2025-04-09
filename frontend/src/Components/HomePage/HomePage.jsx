@@ -3,7 +3,8 @@ import { useUser } from "../../context/UserContext";
 import './HomePage.css';
 
 const HomePage = () => {
-  const { first: username, preference, id: userId } = useUser() || {};
+  const { user } = useUser();
+  const { id: userId, first: username, preference } = user || {};
   const [showPopup, setShowPopup] = useState(false);
   const [selected, setSelected] = useState([]);
   const [showStreamForm, setShowStreamForm] = useState(false);
@@ -29,6 +30,9 @@ const HomePage = () => {
   ];
 
   useEffect(() => {
+    console.log("User from context:", user);       // Check what fields are available
+    console.log("User ID is:", userId);           // Should log the correct ID if it exists
+    console.log("Username is:", username);
     fetch("http://localhost:5002/streams")
       .then(res => res.json())
       .then(data => {

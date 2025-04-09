@@ -5,7 +5,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^6.4.8",
+    "@mui/icons-material": "^6.4.11",
     "@mui/material": "^6.4.8",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -44,12 +44,12 @@
   "scripts": {
     "start": "echo \"Run 'npm run server' for the backend and 'npm run client' for the frontend\"",
     "client": "cross-env PORT=3001 react-scripts start",
-    "proxy": "http://localhost:5002",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "node src/server.js"
   },
+  "proxy": "http://localhost:5002",
   "eslintConfig": {
     "extends": [
       "react-app",

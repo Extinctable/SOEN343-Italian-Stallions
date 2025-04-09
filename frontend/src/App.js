@@ -3,12 +3,11 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "r
 
 import LandingPage from "./Components/LandingPage/LandingPage";
 import HeaderExport from "./Components/Header/HeaderExport";
-// import HeaderMain from "./Components/Header/HeaderMain";
+// import HeaderMain from "./Components/Header/HeaderMain"; 
 import Footer from "./Components/Footer/Footer";
 import NavBar from "./Components/NavBar";
 import LoginForm from "./Components/LoginForm";
 import SignUp from "./Components/SignUp/SignUp.js"; // First sign up page
-import SignUpLogin from "./Components/SignUpLogin/SignUpLogin"; // Sign up and login together
 import AboutUs from "./Components/AboutUsPage/AboutUs";
 import Contact from "./Components/Contact/Contact";
 import UserAnalytics from './Components/Analytics/UserAnalytics';
@@ -19,6 +18,8 @@ import AccountSettings from "./Components/AccountSettings/AccountSettings";
 import FinancialManager from "./Components/Finance/FinancialManager.jsx";
 import EventManager from "./Components/Events/EventManager.jsx";
 
+import Streamer from "./Components/Streamer"; 
+import Viewer from "./Components/Viewer";
 
 import { UserProvider } from "./context/UserContext"; 
 
@@ -41,7 +42,6 @@ function MainLayout() {
   const location = useLocation();
   const hideNavOnAuthPages = 
     location.pathname === "/login" || 
-    location.pathname === "/signuplogin" ||
     location.pathname === "/signup" ||
     location.pathname === "/landing";
 
@@ -61,7 +61,6 @@ function MainLayout() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/signuplogin" element={<SignUpLogin />} />
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/Analytics" element={<UserAnalytics />} />
             <Route path="/Account" element={<AccountSettings />} />
@@ -69,6 +68,8 @@ function MainLayout() {
             <Route path="/message" element={<Message />} />
             <Route path="/FinancialManager" element={<FinancialManager />} />
             <Route path="/EventManager" element={<EventManager />} />
+            <Route path="/streamer" element={<Streamer />} />
+            <Route path="/viewer" element={<Viewer />} />
           </Routes>
         </div>
       )}
