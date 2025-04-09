@@ -3,7 +3,9 @@ import { useUser } from "../../context/UserContext";
 import '../HomePage/HomePage.css'; // Reuse the popup styling
 
 const AccountSettings = () => {
-  const { first: username, preference, id: userId } = useUser() || {};
+  const { user } = useUser();
+  const { id: userId, first: username, preference } = user || {};
+  
   const [showPopup, setShowPopup] = useState(false);
   const [selected, setSelected] = useState([]);
   
