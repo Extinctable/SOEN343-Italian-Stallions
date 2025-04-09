@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./signup.css";
+import "./SignUp.css";
 import backgroundImage from "../Assets/stallion-logo-darkmode.png";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
@@ -145,7 +145,7 @@ const SignUp = () => {
         const user = await response.json();
         localStorage.setItem("user_id", user.user_id);
         console.log("Login successful:", user);
-        navigate("/teams");
+        navigate("/home");
       } else {
         const data = await response.json();
         const errorMessage = data.message || "Login failed";
