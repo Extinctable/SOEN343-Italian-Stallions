@@ -141,6 +141,7 @@ const SignUp = () => {
       const response = await fetch(url, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include'
       });
   
       if (response.ok) {
