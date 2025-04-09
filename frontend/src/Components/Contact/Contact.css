@@ -1,12 +1,12 @@
 .contact {
   display: flex;
-  
   align-items: center;
   min-height: 100vh;
   background: #aaa;
 }
+
 .header {
-  margin-bottom: 1000px;
+  margin-bottom: 485px;
 
 }
 
@@ -20,6 +20,7 @@
   color: #333;
   margin: 25px;
   margin-left: 400px;
+  margin-top: 200px;
 }
 
 .form h2 {

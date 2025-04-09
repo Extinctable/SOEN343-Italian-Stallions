@@ -2,11 +2,17 @@
 
 .nav {
     position: relative;
-    margin-top: -200px; /* Added for the stallions */
-}
+    
+  }
 
 /* Styles for 'right' and 'center' navigation positions on smaller screens */
 @media screen and (max-width: 990px) { /* Adjusted for consistent behavior */
+
+    /* Ensures no negative offset for small screens or overlay modes*/
+    .nav {
+        margin-top: 0;
+    }
+
     [data-nav-position="right"] .nav,
     [data-nav-position="center"] .nav {
         position: fixed;
@@ -48,6 +54,7 @@
 /* Styles for 'overlay' navigation */
 [data-nav-position="overlay"] .nav {
     position: fixed;
+    margin-top: 0px;
     top: 0;
     left: 0;
     width: 100vw;
@@ -82,6 +89,13 @@
 
 /* Styles for larger screens */
 @media screen and (min-width: 990px) { 
+
+    /* Added the negative margin only for larger screens */
+    .nav {
+        position: relative;
+        margin-top: -200px;
+    }
+
     [data-nav-position="right"] .nav,
     [data-nav-position="center"] .nav {
         place-self: center;

@@ -2,7 +2,7 @@ const navigation = [
   {
     id: "5258d430-d729-44b1-96ad-484c005d",
     name: "Home",
-    slug: "home"
+    slug: "landing"
   },
   {
     id: "94596dd2-3e95-4587-bdfd-4f48af31b06d",
@@ -17,7 +17,7 @@ const navigation = [
   {
     id: "2836aafa-6733-4b25-a908-ffca75b3e84f",
     name: "Sign in",
-    slug: "login", 
+    slug: "signup", 
   }
 ];
 

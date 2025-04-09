@@ -43,7 +43,7 @@ function NavBar() {
         <div className="image-text">
           <span className="image">
            
-          <img src={darkMode ? "/stallion-logo-darkmode.png" : "/stallion-logo.webp"} alt="Stallion Logo" />
+          <img src={darkMode ? "./Assets/stallion-logo-darkmode.png" : "./Assets/stallion-logo.webp"} alt="Stallion Logo" />
           </span>
           <div className="text logo-text">
             <span className="name">StallionSpeaks</span>
@@ -104,7 +104,7 @@ function NavBar() {
         {/* BOTTOM CONTENT (Logout + Dark Mode Switch) */}
         <div className="bottom-content">
           <li>
-            <a href="/login">
+            <a href="/signup">
               <i className="bx bx-log-out icon"></i>
               <span className="text nav-text">Logout</span>
             </a>
