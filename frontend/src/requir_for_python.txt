@@ -1,0 +1,5 @@
+pip install flask flask-socketio eventlet openai-whisper
+pip install pydub flask flask-socketio whisper
+pip install --user whisper
+pip install --user pydub
+pip install av soundfile numpy
