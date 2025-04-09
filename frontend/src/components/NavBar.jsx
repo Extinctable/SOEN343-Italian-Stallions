@@ -43,7 +43,7 @@ function NavBar() {
         <div className="image-text">
           <span className="image">
            
-          <img src={darkMode ? "/stallion-logo-darkmode.png" : "/stallion-logo.webp"} alt="Stallion Logo" />
+          <img src={darkMode ? "./Assets/stallion-logo-darkmode.png" : "./Assets/stallion-logo.webp"} alt="Stallion Logo" />
           </span>
           <div className="text logo-text">
             <span className="name">StallionSpeaks</span>

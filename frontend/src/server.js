@@ -18,8 +18,8 @@ app.use(express.json());
 const db = new Pool({
   user: "postgres",
   host: "localhost",
-  database: "",
-  password: "",
+  database: "Project343DB",
+  password: "mac1",
   port: 5432,
 });
 
@@ -75,7 +75,7 @@ const createStreamsTable = async () => {
 // NEO4J SETUP
 // =====================================================================
 const driver = neo4j.driver(
-  'neo4j://localhost:7689',
+  'neo4j://localhost:7687',
   neo4j.auth.basic('neo4j', 'message88')
 );
 const session = driver.session();
@@ -272,7 +272,11 @@ app.get("/returnUsers", async (req, res) => {
        WHERE u.id <> $loginUserID
          AND NOT EXISTS {
            MATCH (u)-[:SOME_RELATIONSHIP]-(otherUser:User {id: $loginUserID})
-         }
+         }AND NOT EXISTS {
+       MATCH (u)-[:FRIEND]-(otherUser:User {id: $loginUserID})
+     }AND NOT EXISTS {
+       MATCH (u)-[:REQUEST]->(otherUser:User {id: $loginUserID})
+     }
        RETURN u.first AS firstName, u.last AS lastName, u.id AS id
       `, { loginUserID }
     ); 
@@ -397,14 +401,14 @@ server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-// =====================================================================
-// Startup: Create test user (wrapped to avoid duplicate errors)
-// =====================================================================
-const firstTest = "Adriano";
-const lastTest = "zlatan";
-const passwordTest = "1";
-const descriptionTest = "Defence";
-const emailTest = "mercedes17780@example.com";
+// Create test user on startup
+const first = "Lilian";
+const last = "Thuram";
+const password = "1";
+const description = "New1";
+const email = "merced5555533555Test@example.com";
+const preference = "";
+
 (async () => {
   await createUserTable();
   await createStreamsTable();

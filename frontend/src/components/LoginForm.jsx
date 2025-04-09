@@ -56,8 +56,8 @@ function LoginForm() {
         width: "100vw",
       }}
     >
-      <img className="image_for_login" src="/stallion-logo.webp" alt="stallion logo" />
-      <img className="Inverted_image_for_login" src="/inverted_logo.png" alt="stallion logo" />
+      <img className="image_for_login" src="./Assets/stallion-logo.webp" alt="stallion logo" />
+      <img className="Inverted_image_for_login" src="./Assets/inverted_logo.png" alt="stallion logo" />
 
       <div className="login-box">
         <p>Login</p>
