@@ -29,7 +29,7 @@ const db = new Pool({
   user: "postgres",
   host: "localhost",
   database: "Project343DB",
-  password: "mac1",
+  password: "12345",
   port: 5432,
 });
 
@@ -219,19 +219,6 @@ const addUser = async (first, last, password, description, email, role, category
     console.error("Error adding user:", err);
   }
 };
-
-// Add user to Neo4j
-const addToNeo4j = async ({ id, first, last, description, email }) => {
-  try {
-    const cypherQuery = `
-      MERGE (u:User {id: $id})
-      SET u.first = $first, u.last = $last, u.description = $description, u.email = $email
-      RETURN u;
-    `;
-    const result = await session.run(cypherQuery, { id, first, last, description, email });
-    console.log("User added to Neo4j:", result.records[0].get('u'));
-  } catch (error) {
-    console.error("Error adding user to Neo4j:", error);
 // Add user to Neo4j
 const addToNeo4j = async ({ id, first, last, description, email }) => {
   try {
@@ -338,14 +325,17 @@ app.get('/login', async (req, res) => {
     // Look up the user by email and role.
     const query = `SELECT * FROM users WHERE email = $1 AND role = $2;`;
     const result = await db.query(query, [email, role]);
+
     if (result.rows.length === 0) {
       return res.status(401).json({ message: "Invalid credentials or role" });
     }
+
     const user = result.rows[0];
+
     // WARNING: For production, use password hashing instead of plain text.
     if (user.password === password) {
-      loginUserID = user.id;
-      return res.status(200).json({ message: "Login successful", user_id: user.id });
+      // ✅ Return the full user object
+      return res.status(200).json(user);
     } else {
       return res.status(401).json({ message: "Incorrect password" });
     }
@@ -354,6 +344,7 @@ app.get('/login', async (req, res) => {
     return res.status(500).json({ message: "Error during login", error: err.message });
   }
 });
+
 
 // =====================================================================
 // OTHER ENDPOINTS (Friend requests, streams, etc.)
@@ -527,7 +518,7 @@ const preference = "";
   await createUserTable();
   await createStreamsTable();
   try {
-    await addUser(firstTest, lastTest, passwordTest, descriptionTest, emailTest, "organizer", "Event organizers");
+    await addUser(first, last, password, description, email, "organizer", "Event organizers");
   } catch (err) {
     console.error("Test user insertion error (likely duplicate):", err.message);
   }
@@ -535,6 +526,4 @@ const preference = "";
 
 // Export for optional reuse
 module.exports = { db, checkUserCredentials };
-
-//driver.close();
 

@@ -12,7 +12,10 @@ export const UserProvider = ({ children }) => {
 
     fetch(`http://localhost:5002/user?email=${encodeURIComponent(email)}`)
       .then((res) => res.json())
-      .then((data) => setUser(data))
+      .then((data) => {
+        console.log("Fetched user ID:", data.id); 
+        setUser(data);
+      })
       .catch((err) => {
         console.error("Failed to fetch user", err);
         setUser(null);
