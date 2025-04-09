@@ -1,8 +1,8 @@
-/* Events/EventManager.css */
+/* /src/Events/EventManager.css */
 .event-manager-container {
     padding: 2rem;
     font-family: Arial, sans-serif;
-    max-width: 80%;
+    max-width: 90%;
     margin: 0 auto;
     color: #333;
   }
@@ -12,23 +12,23 @@
     margin-bottom: 1.5rem;
   }
   
-  .buttons {
+  .organizer-actions {
     text-align: center;
     margin-bottom: 1.5rem;
   }
   
-  .buttons button {
+  .organizer-actions button {
     margin: 0 0.5rem;
     padding: 0.5rem 1rem;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
     background-color: #4caf50;
     color: white;
     cursor: pointer;
     transition: background-color 0.3s ease;
   }
   
-  .buttons button:hover {
+  .organizer-actions button:hover {
     background-color: #45a049;
   }
   
@@ -44,11 +44,44 @@
     background-color: #f9f9f9;
   }
   
+  .event-item h3 {
+    margin-top: 0;
+  }
+  
+  .organizer-controls {
+    margin-top: 0.8rem;
+  }
+  
+  .organizer-controls button {
+    margin-right: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #2196f3;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .organizer-controls button:hover {
+    background-color: #1976d2;
+  }
+  
   .report-section {
     margin-top: 2rem;
-    padding: 1rem;
-    border: 1px solid #4caf50;
-    border-radius: 8px;
-    background-color: #e8f5e9;
+    text-align: center;
+  }
+  
+  .report-section button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: #4caf50;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .report-section button:hover {
+    background-color: #45a049;
   }
   

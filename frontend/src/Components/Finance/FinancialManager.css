@@ -1,8 +1,8 @@
-/* Finance/FinancialManager.css */
+/* /src/Finance/FinancialManager.css */
 .financial-manager-container {
     padding: 2rem;
     font-family: Arial, sans-serif;
-    max-width: 80%;
+    max-width: 90%;
     margin: 0 auto;
     color: #333;
   }
@@ -12,12 +12,50 @@
     margin-bottom: 1.5rem;
   }
   
-  .payment-section, .report-section {
-    margin-top: 1.5rem;
+  .pending-events, .payment-options, .payment-history {
+    margin-bottom: 2rem;
     padding: 1rem;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
+  }
+  
+  .event-card {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .event-card h4 {
+    margin: 0 0 0.3rem 0;
+  }
+  
+  .event-card p {
+    margin: 0.3rem 0;
+  }
+  
+  .event-card .price {
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .event-card button {
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #2196f3;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .event-card button:hover {
+    background-color: #1976d2;
   }
   
   .form-group {
@@ -31,38 +69,27 @@
     min-width: 120px;
   }
   
-  .form-group input, .form-group select {
-    flex: 1;
+  .form-group select {
     padding: 0.5rem;
     border: 1px solid #ddd;
     border-radius: 4px;
   }
   
-  .form-group button {
-    padding: 0.5rem 1rem;
-    border: none;
-    background-color: #2196f3;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .form-group button:hover {
-    background-color: #1976d2;
-  }
-  
   .result {
-    margin-top: 1rem;
     font-weight: bold;
     color: green;
+    margin-top: 0.5rem;
   }
   
-  .report-section pre {
+  .payment-history ul {
+    list-style-type: none;
+    padding-left: 0;
+  }
+  
+  .payment-history li {
     background-color: #e8f5e9;
-    padding: 1rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    white-space: pre-wrap;
-    margin-top: 1rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
   }
   
