@@ -137,12 +137,11 @@ class DeleteEventCommand extends EventCommand {
 // --------------------
 
 const EventManager = () => {
-  // State for events (used in organizer flow)
+  // Organizer flow state
   const [events, setEvents] = useState([]);
-  // Command history for organizer commands (for undo)
   const [commandHistory, setCommandHistory] = useState([]);
   
-  // States for attendee flow
+  // Attendee flow state
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [allEvents, setAllEvents] = useState([]);
   const [availableEvents, setAvailableEvents] = useState([]);
@@ -160,6 +159,13 @@ const EventManager = () => {
       console.error("Failed to fetch organizer events:", err);
     }
   };
+
+  // New: Fetch organizer events when userRole is organizer.
+  useEffect(() => {
+    if (userRole === "organizer") {
+      fetchOrganizerEvents();
+    }
+  }, []);
 
   const addEventLocal = (newEvent, deleteId) => {
     if (newEvent) {
@@ -223,7 +229,7 @@ const EventManager = () => {
   // ------------------------
   // Attendee Flow Functions
   // ------------------------
-  const userId = 1; // Replace with actual authenticated attendee user ID
+  const userId = 2; // Replace with actual authenticated attendee user ID
   
   // Fetch registered events (from user_events joined with events)
   const fetchRegisteredEvents = async () => {
@@ -253,7 +259,7 @@ const EventManager = () => {
       fetchRegisteredEvents();
       fetchAllEvents();
     }
-  }, []);
+  }, [userRole]);
 
   useEffect(() => {
     if (userRole === "attendee" && allEvents.length > 0) {
