@@ -44,12 +44,12 @@
   "scripts": {
     "start": "echo \"Run 'npm run server' for the backend and 'npm run client' for the frontend\"",
     "client": "cross-env PORT=3001 react-scripts start",
-    "proxy": "http://localhost:5002",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "node src/server.js"
   },
+  "proxy": "http://localhost:5002",
   "eslintConfig": {
     "extends": [
       "react-app",

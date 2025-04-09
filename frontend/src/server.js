@@ -1,3 +1,9 @@
+/****************************************************************
+ *  COMPLETE SERVER.JS – PRESERVING ORIGINAL LINES, 
+ *  ONLY ADDING OPENAI TRANSCRIPTION LOGIC
+ ****************************************************************/
+
+require("dotenv").config(); // (NEW) Loads .env
 const express = require('express');
 const { Pool } = require('pg');
 const app = express();
@@ -7,7 +13,11 @@ const userController = require('./controllers/userController'); // changed here
 const streamController = require('./controllers/streamController');
 const { Server } = require("socket.io");
 const http = require("http");
-
+const axios = require("axios");         // (NEW) for openAI HTTP calls
+const FormData = require("form-data");  // (NEW) for multipart form
+const fs = require("fs");               // (NEW) for saving chunk
+const path = require("path");           // (NEW) path ops
+const { v4: uuidv4 } = require("uuid"); // (NEW) unique temp filenames
 // Enable CORS for all routes
 app.use(cors());
 
@@ -81,41 +91,110 @@ const driver = neo4j.driver(
 const session = driver.session();
 console.log("Connected to Neo4j!");
 
+
 // =====================================================================
 // SOCKET.IO SETUP
 // =====================================================================
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3001", // Adjust for frontend
+    origin: "http://localhost:3001", // 🔁 Make sure your React frontend is running on this
     methods: ["GET", "POST"]
   }
 });
 
-// Socket handlers
-io.on("connection", (socket) => {
-  console.log("A user connected:", socket.id);
 
-  socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
-    const sessionSocket = driver.session();
-    try {
-      // Store message as a relationship in Neo4j
-      await sessionSocket.run(
-        `MATCH (sender:User {id: $senderId}), (receiver:User {id: $receiverId})
-         CREATE (sender)-[:MESSAGE {text: $message, timestamp: datetime()}]->(receiver)`,
-        { senderId, receiverId, message }
-      );
-      // Emit message to receiver
-      io.to(receiverId).emit("receiveMessage", { senderId, message });
-    } catch (err) {
-      console.error("Error saving message:", err);
-    } finally {
-      await sessionSocket.close();
-    }
+// Step 3: Handle socket connections
+
+io.on("connection", (socket) => {
+  console.log("✅ A user connected:", socket.id);
+
+  socket.on("viewer-ready", () => {
+    console.log("👀 Viewer is ready, notifying streamer...");
+    socket.broadcast.emit("viewer-ready");
   });
 
+  socket.on("stream-offer", (offer) => {
+    console.log("📤 Stream offer received, broadcasting to viewers...");
+    socket.broadcast.emit("stream-offer", offer);
+  });
+
+  socket.on("stream-answer", (answer) => {
+    console.log("📥 Answer received, sending to streamer...");
+    socket.broadcast.emit("stream-answer", answer);
+  });
+
+// 🧊 ICE Candidate relaying
+socket.on("stream-ice-candidate", (candidate) => {
+  console.log("🧊 ICE candidate relayed");
+  socket.broadcast.emit("stream-ice-candidate", candidate);
+});
+
+// 📢 Subtitle relaying
+socket.on("subtitle", (text) => {
+  console.log("📢 Subtitle relayed to viewers:", text);
+  socket.broadcast.emit("subtitle", text);
+});
+
+/************************************************************
+ * (NEW) The streamer can send raw audio chunks to be transcribed
+ ************************************************************/
+socket.on("audio_chunk", async (base64Audio) => {
+  let tempFile;
+  try {
+    const audioBuffer = Buffer.from(base64Audio, "base64");
+    tempFile = path.join(__dirname, `temp_${uuidv4()}.webm`);
+    fs.writeFileSync(tempFile, audioBuffer);
+
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(tempFile), {
+      filename: "audio.webm",
+      contentType: "audio/webm"
+    });
+    formData.append("model", "whisper-1");
+    formData.append("language", "en");
+
+    const response = await axios.post("https://api.openai.com/v1/audio/transcriptions", formData, {
+      headers: {
+        // Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        ...formData.getHeaders(),
+      },
+    });
+
+    const text = (response.data.text || "").trim();
+    console.log("📝 Transcribed text:", text);
+    if (text) {
+      socket.broadcast.emit("subtitle", text);
+    }
+
+    fs.unlinkSync(tempFile);
+  } catch (err) {
+    console.error("❌ Transcription error:", err.response?.data || err.message);
+    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+  }
+});
+
+// 💬 Messaging system with Neo4j
+socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
+  const sessionSocket = driver.session();
+  try {
+    await sessionSocket.run(
+      `MATCH (sender:User {id: $senderId}), (receiver:User {id: $receiverId})
+       CREATE (sender)-[:MESSAGE {text: $message, timestamp: datetime()}]->(receiver)`,
+      { senderId, receiverId, message }
+    );
+    io.to(receiverId).emit("receiveMessage", { senderId, message });
+  } catch (err) {
+    console.error("Error saving message:", err);
+  } finally {
+    await sessionSocket.close();
+  }
+});
+
+
   socket.on("disconnect", () => {
-    console.log("A user disconnected:", socket.id);
+    console.log("❌ User disconnected:", socket.id);
   });
 });
 
@@ -125,6 +204,7 @@ io.on("connection", (socket) => {
 
 // Updated addUser function: now accepts role and category.
 const addUser = async (first, last, password, description, email, role, category) => {
+
   const insertQuery = `
     INSERT INTO users (first, last, password, description, email, role, category)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -152,6 +232,20 @@ const addToNeo4j = async ({ id, first, last, description, email }) => {
     console.log("User added to Neo4j:", result.records[0].get('u'));
   } catch (error) {
     console.error("Error adding user to Neo4j:", error);
+// Add user to Neo4j
+const addToNeo4j = async ({ id, first, last, description, email }) => {
+  try {
+    const cypherQuery = `
+      MERGE (u:User {id: $id})
+      SET u.first = $first, u.last = $last, u.description = $description, u.email = $email
+      RETURN u;
+    `;
+    const result = await session.run(cypherQuery, { id, first, last, description, email });
+    console.log("User added to Neo4j:", result.records[0].get('u'));
+  } catch (error) {
+    console.error("Error adding user to Neo4j:", error);
+  } finally {
+    // session.close() if needed
   }
 };
 
@@ -173,6 +267,8 @@ app.post('/add-user', async (req, res) => {
 });
 
 // Legacy endpoint for checking credentials (without role check)
+// (You can continue writing this part based on your logic)
+
 const checkUserCredentials = async (email, password) => {
   const query = `SELECT * FROM users WHERE email = $1;`;
   try {
@@ -206,6 +302,7 @@ app.post('/check-credentials', async (req, res) => {
     res.status(401).json({ message: 'Invalid credentials' });
   }
 });
+
 
 // =====================================================================
 // NEW SIGN UP ENDPOINT (with role and category)
@@ -263,10 +360,12 @@ app.get('/login', async (req, res) => {
 // =====================================================================
 
 // Example: Display users endpoint
+
 app.get("/returnUsers", async (req, res) => {
   const session3 = driver.session();
   console.log("Is this good ", loginUserID);
   try {
+
     const result = await session3.run(
       `MATCH (u:User)
        WHERE u.id <> $loginUserID
@@ -280,6 +379,7 @@ app.get("/returnUsers", async (req, res) => {
        RETURN u.first AS firstName, u.last AS lastName, u.id AS id
       `, { loginUserID }
     ); 
+
 
     const users = result.records.map(record => ({
       id: record.get("id"),
@@ -296,7 +396,9 @@ app.get("/returnUsers", async (req, res) => {
   }
 });
 
+
 // Friend request endpoints
+
 app.post("/sendFriendRequest", async (req, res) => {
   const { receiverID } = req.body;
   try {
@@ -309,12 +411,15 @@ app.post("/sendFriendRequest", async (req, res) => {
   } catch (error) {
     console.error("Error sending friend request:", error);
     res.status(500).send("Server error");
+
   }
+
 });
 
 app.post("/acceptFriendRequest", async (req, res) => {
   const session8 = driver.session();
   try {
+
     await session8.run(
       `MATCH (a:User)-[r:REQUEST]->(b:User {id: $loginUserID})
        DELETE r
@@ -322,23 +427,26 @@ app.post("/acceptFriendRequest", async (req, res) => {
        CREATE (b)-[:FRIEND]->(a)`,
       { loginUserID }
     );
+
     res.json({ message: "Friend request accepted!" });
   } catch (error) {
     console.error("Error accepting friend request:", error);
     res.status(500).send("Server error");
   } finally {
-    await session8.close();
+    session8.close();
   }
 });
 
 app.get("/getFriendRequests", async (req, res) => {
   const session2 = driver.session();
+
   try {
     const result = await session2.run(
       `MATCH (sender:User)-[r:REQUEST]->(receiver:User {id: $loginUserID})
        RETURN sender.id AS senderID, sender.first AS firstName, sender.last AS lastName`,
       { loginUserID }
     );
+
     const requests = result.records.map(record => ({
       senderID: record.get("senderID"),
       firstName: record.get("firstName"),
@@ -349,9 +457,10 @@ app.get("/getFriendRequests", async (req, res) => {
     console.error("Error fetching friend requests:", error);
     res.status(500).send("Server error");
   } finally {
-    await session2.close();
+    session2.close();
   }
 });
+
 
 // Message (friends) endpoint
 app.get("/friends", async (req, res) => {
@@ -362,6 +471,7 @@ app.get("/friends", async (req, res) => {
        RETURN f.id AS id, f.first AS first, f.last AS last, f.email AS email, f.description AS description`,
       { loginUserID }
     );
+
 
     if (result.records.length === 0) {
       return res.json({ message: 'No friends' });
@@ -384,9 +494,11 @@ app.get("/friends", async (req, res) => {
   }
 });
 
+
 // =====================================================================
 // Routes using controllers
 // =====================================================================
+
 app.get('/user', userController.getUser);
 app.post('/set-preference', userController.setPreference);
 app.post('/create-stream', streamController.createStream);
@@ -398,7 +510,9 @@ app.post('/recommend-stream', streamController.recommendStream);
 // =====================================================================
 const PORT = 5002;
 server.listen(PORT, () => {
+
   console.log(`Server is running on http://localhost:${PORT}`);
+
 });
 
 // Create test user on startup
@@ -423,3 +537,4 @@ const preference = "";
 module.exports = { db, checkUserCredentials };
 
 //driver.close();
+

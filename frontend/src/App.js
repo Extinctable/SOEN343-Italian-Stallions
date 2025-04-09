@@ -15,6 +15,8 @@ import Message from "./Components/Message/Message";
 import Network from "./Components/Network/Network";
 import HomePage from "./Components/HomePage/HomePage.jsx";
 import AccountSettings from "./Components/AccountSettings/AccountSettings";
+import Streamer from "./Components/Streamer"; 
+import Viewer from "./Components/Viewer";
 
 import { UserProvider } from "./context/UserContext"; 
 
@@ -61,6 +63,8 @@ function MainLayout() {
             <Route path="/Account" element={<AccountSettings />} />
             <Route path="/network" element={<Network />} />
             <Route path="/message" element={<Message />} />
+            <Route path="/streamer" element={<Streamer />} />
+            <Route path="/viewer" element={<Viewer />} />
           </Routes>
         </div>
       )}
