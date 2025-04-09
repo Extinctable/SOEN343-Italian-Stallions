@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./SignUp.css";
+import "./signup.css";
 import backgroundImage from "../Assets/stallion-logo-darkmode.png";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";

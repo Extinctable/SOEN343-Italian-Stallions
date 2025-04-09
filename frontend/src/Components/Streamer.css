@@ -1,0 +1,113 @@
+/* Layout container */
+.stream-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    padding: 2rem;
+    background-color: #f9fafb;
+    min-height: 100vh;
+    justify-content: center;
+    align-items: flex-start;
+    margin-left: -2rem;
+  }
+  
+  /* Left panel: streamer controls */
+  .stream-controls {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 20vw;
+  }
+  
+  .stream-controls h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 2.5rem;
+  }
+  
+  .stream-controls button {
+    padding: 0.5rem 1rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .stream-controls button:hover {
+    background-color: #2563eb;
+  }
+  
+  /* Right panel: video and info */
+  .stream-card {
+    background-color: white;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    max-width: 45vw;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .stream-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #059669; /* green-600 */
+    margin-bottom: 1rem;
+  }
+  
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #10b981; /* green-500 */
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 0.6;
+    }
+  }
+  
+  .stream-video {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 2px solid #d1d5db; /* gray-300 */
+    object-fit: cover;
+  }
+  
+  /* Viewer count */
+  .viewer_count {
+    margin-top: 1.5rem;
+    font-weight: 700;
+    color: #374151; /* gray-700 */
+    margin-left: -70%;
+  }
+
+.not{
+    color:rgb(241, 59, 59);
+   
+}
+
+.not_dot{
+    background-color: rgb(241, 59, 59);
+   
+}
+  
