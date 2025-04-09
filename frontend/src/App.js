@@ -8,7 +8,6 @@ import Footer from "./Components/Footer/Footer";
 import NavBar from "./Components/NavBar";
 import LoginForm from "./Components/LoginForm";
 import SignUp from "./Components/SignUp/signup.js"; // First sign up page
-import SignUpLogin from "./Components/SignUpLogin/SignUpLogin"; // Sign up and login together
 import AboutUs from "./Components/AboutUsPage/AboutUs";
 import Contact from "./Components/Contact/Contact";
 import UserAnalytics from './Components/Analytics/UserAnalytics';
@@ -38,7 +37,6 @@ function MainLayout() {
   const location = useLocation();
   const hideNavOnAuthPages = 
     location.pathname === "/login" || 
-    location.pathname === "/signuplogin" ||
     location.pathname === "/signup" ||
     location.pathname === "/landing";
 
@@ -58,7 +56,6 @@ function MainLayout() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/signuplogin" element={<SignUpLogin />} />
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/Analytics" element={<UserAnalytics />} />
             <Route path="/Account" element={<AccountSettings />} />
