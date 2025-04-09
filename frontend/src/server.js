@@ -152,7 +152,7 @@ io.on("connection", (socket) => {
 
       const response = await axios.post("https://api.openai.com/v1/audio/transcriptions", formData, {
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          //Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           ...formData.getHeaders(),
         },
       });

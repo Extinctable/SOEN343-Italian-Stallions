@@ -57,7 +57,7 @@ function NavBar() {
           {/* MENU LINKS */}
           <ul className="menu-links">
             <li className="nav-link">
-              <NavLink to="/" className={({ isActive }) => (isActive ? "active-link" : "")}>
+              <NavLink to="/home" className={({ isActive }) => (isActive ? "active-link" : "")}>
                 <i className="bx bx-home-alt icon"></i>
                 <span className="text nav-text">Home</span>
               </NavLink>
