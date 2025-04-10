@@ -20,6 +20,12 @@ const Streamer = () => {
   const [isCameraOff, setIsCameraOff] = useState(false);
   const streamRef = useRef(null); // to hold original stream
   const [isStreaming, setIsStreaming] = useState(true);
+  const [qaQuestions, setQaQuestions] = useState([]);
+  const [pollResults, setPollResults] = useState(null);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]); // start with 2 empty options
+  
+
 
   const toggleMute = () => {
     if (streamRef.current) {
@@ -84,6 +90,35 @@ const Streamer = () => {
         signalingSocket.emit("stream-offer", offer);
       });
 
+      signalingSocket.on("new-question", ({ username, message }) => {
+        console.log("📣 Emitting 'start-qa' event to viewers");
+        setQaQuestions((prev) => [...prev, `${username} asked: ${message}`]);
+      });
+      signalingSocket.on("start-poll", (pollData) => {
+        // Reset poll results
+        const initialCounts = {};
+        pollData.options.forEach(opt => {
+          initialCounts[opt] = 0;
+        });
+        setPollResults({
+          question: pollData.question,
+          counts: initialCounts
+        });
+      });
+      
+      signalingSocket.on("new-vote", ({ option }) => {
+        setPollResults(prev => {
+          if (!prev || !prev.counts[option]) return prev;
+          return {
+            ...prev,
+            counts: {
+              ...prev.counts,
+              [option]: prev.counts[option] + 1
+            }
+          };
+        });
+      });
+      
       signalingSocket.on("stream-answer", async (answer) => {
         if (!hasSetRemoteAnswer) {
           await peerConnection.setRemoteDescription(
@@ -159,13 +194,84 @@ const Streamer = () => {
     };
   }, []);
 
+  const handleStartPoll = () => {
+    const trimmedOptions = pollOptions.map(opt => opt.trim()).filter(opt => opt !== "");
+  
+    if (!pollQuestion.trim() || trimmedOptions.length < 2) {
+      alert("Please provide a poll question and at least two valid options.");
+      return;
+    }
+  
+    const pollData = {
+      question: pollQuestion.trim(),
+      options: trimmedOptions
+    };
+  
+    signalingSocket.emit("start-poll", pollData);
+    console.log("📢 Poll sent to viewers:", pollData);
+  
+    // Clear the form
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+  };
+  
+  
+
   return (
     <div className="stream-layout">
+      <div className="all_stream_controls">
       <div className="stream-controls">
         <h3>🎛️ Stream Controls</h3>
         <button onClick={toggleMute}>{isMuted ? "Unmute" : "Mute"}</button>
         <button onClick={toggleVideo}>{isCameraOff ? "Turn Camera On" : "Turn Camera Off"}</button>
         <button onClick={endStream}>End Stream</button>
+      </div>
+      
+
+      <div className="stream-controls questions">
+        <h3>Ask viewers</h3>
+        
+       
+        <button onClick={() => signalingSocket.emit("start-qa")}>
+  Start Q/A
+</button>
+
+<div className="poll-creator">
+  <input
+    type="text"
+    placeholder="Poll Question"
+    value={pollQuestion}
+    onChange={(e) => setPollQuestion(e.target.value)}
+    className="poll-input"
+  />
+
+  {pollOptions.map((option, idx) => (
+    <input
+      key={idx}
+      type="text"
+      placeholder={`Option ${idx + 1}`}
+      value={option}
+      onChange={(e) => {
+        const newOptions = [...pollOptions];
+        newOptions[idx] = e.target.value;
+        setPollOptions(newOptions);
+      }}
+      className="poll-input"
+    />
+  ))}
+
+  <button
+    onClick={() => setPollOptions([...pollOptions, ""])}
+    className="add-option-button"
+  >
+    ➕ Add Option
+  </button>
+</div>
+
+
+<button onClick={handleStartPoll}>Start a poll</button>
+
+      </div>
       </div>
   
       <div className="stream-card">
@@ -176,6 +282,33 @@ const Streamer = () => {
         <video ref={videoRef} autoPlay muted className="stream-video" />
         <p className="viewer_count">Current viewer count: 0</p>
       </div>
+
+      <div className="qa-section">
+  <h3>📩 Viewer Questions</h3>
+  {qaQuestions.length === 0 ? (
+    <p>No questions yet.</p>
+  ) : (
+    <ul>
+      {qaQuestions.map((q, idx) => (
+        <li key={idx}>{q}</li>
+      ))}
+    </ul>
+  )}
+
+{pollResults && (
+  <div className="poll-results">
+    <h3>{pollResults.question}</h3>
+    <ul>
+      {Object.entries(pollResults.counts).map(([option, count]) => (
+        <li key={option}>
+          {option}: {count} vote{count !== 1 ? "s" : ""}
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
+</div>
     </div>
   );
   

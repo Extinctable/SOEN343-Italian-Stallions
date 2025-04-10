@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
-
+import "./Viewer.css";
 // Connect to signaling server (Node.js)
 const socket = io("http://localhost:5002", {
   transports: ["websocket"],
@@ -10,6 +10,13 @@ const Viewer = () => {
   const videoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const [subtitle, setSubtitle] = useState("");
+  const [qaActive, setQaActive] = useState(false);
+const [question, setQuestion] = useState("");
+const [username, setUsername] = useState("viewer 1"); // Replace this with real user info if you have auth
+const [pollData, setPollData] = useState(null); // poll question + options
+const [selectedOption, setSelectedOption] = useState("");
+
+
 
   useEffect(() => {
     const setupViewer = async () => {
@@ -32,6 +39,12 @@ const Viewer = () => {
         }
       };
 
+      socket.on("start-poll", (data) => {
+        setPollData(data); // { question: '...', options: ['...', '...'] }
+        setSelectedOption("");
+      });
+      
+
       // On connect => let streamer know viewer is ready
       socket.on("connect", () => {
         console.log("✅ Viewer connected to signaling server:", socket.id);
@@ -42,6 +55,11 @@ const Viewer = () => {
       socket.on("disconnect", () => {
         console.warn("⚠️ Viewer disconnected from signaling server");
       });
+
+      socket.on("start-qa", () => {
+        setQaActive(true);
+      });
+      
 
       // On stream-offer => create and send answer
       socket.on("stream-offer", async (offer) => {
@@ -76,6 +94,7 @@ const Viewer = () => {
 
     setupViewer();
 
+
     return () => {
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
@@ -84,6 +103,30 @@ const Viewer = () => {
     };
   }, []);
 
+  const handleVoteSubmit = (e) => {
+    e.preventDefault();
+    if (!selectedOption) return;
+  
+    socket.emit("vote", {
+      username,
+      option: selectedOption
+    });
+  
+    // optionally clear or disable poll
+    setPollData(null);
+  };
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!question.trim()) return;
+  
+    socket.emit("question", {
+      username,
+      message: question
+    });
+  
+    setQuestion(""); // clear input
+  };
   return (
     <div>
       <h2>Watching Live Stream</h2>
@@ -104,6 +147,48 @@ const Viewer = () => {
           {subtitle}
         </div>
       )}
+
+{qaActive && (
+  <div className="qa-container">
+    <h3 className="qa-title">💬 Q&A is Live – Ask your question</h3>
+    <form onSubmit={handleSubmit} className="qa-form">
+      <input
+        type="text"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+        placeholder="Type your question..."
+        className="qa-input"
+      />
+      <button type="submit" className="qa-send-button">
+        Send
+      </button>
+    </form>
+  </div>
+)}
+
+{pollData && (
+  <div className="poll-container">
+    <h3 className="poll-title">📊 {pollData.question}</h3>
+    <form onSubmit={handleVoteSubmit} className="poll-form">
+      {pollData.options.map((opt, idx) => (
+        <label key={idx} className="poll-option">
+          <input
+            type="radio"
+            name="poll"
+            value={opt}
+            checked={selectedOption === opt}
+            onChange={(e) => setSelectedOption(e.target.value)}
+          />
+          {opt}
+        </label>
+      ))}
+      <button type="submit" className="poll-vote-button">
+        Vote
+      </button>
+    </form>
+  </div>
+)}
+
     </div>
   );
 };
