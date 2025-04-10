@@ -141,13 +141,14 @@ const SignUp = () => {
       const response = await fetch(url, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include'
       });
   
       if (response.ok) {
         const user = await response.json();
         login(user); // ✅ this updates context and localStorage (in your context logic)
         console.log("Login successful:", user);
-        navigate("/teams");
+        navigate("/home");
       } else {
         const data = await response.json();
         const errorMessage = data.message || "Login failed";

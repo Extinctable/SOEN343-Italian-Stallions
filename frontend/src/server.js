@@ -14,6 +14,7 @@ const streamController = require('./controllers/streamController');
 const eventController = require('./controllers/eventController');
 const userEventController = require('./controllers/userEventController');
 const userPaymentController = require('./controllers/userPaymentController');
+const notificationController = require('./controllers/notificationController');
 const { Server } = require("socket.io");
 const http = require("http");
 const axios = require("axios");         // (NEW) for openAI HTTP calls
@@ -21,18 +22,35 @@ const FormData = require("form-data");  // (NEW) for multipart form
 const fs = require("fs");               // (NEW) for saving chunk
 const path = require("path");           // (NEW) path ops
 const { v4: uuidv4 } = require("uuid"); // (NEW) unique temp filenames
+const sessiontracking = require('express-session');
 // Enable CORS for all routes
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3001', // your frontend port
+  credentials: true               // 👈 this enables cookies to be sent
+}));
+
 
 // Middleware to parse incoming JSON requests
 app.use(express.json());
+// Set up session middleware
+app.use(sessiontracking({
 
+  secret: 'your-secret-key',  // A secret key for session encryption
+  resave: false,              // Don't force re-saving of session if nothing changed
+  saveUninitialized: true,    // Save session if it is new, even if not modified
+  cookie: {
+    secure: false,                // true in HTTPS
+    httpOnly: true,
+    sameSite: "lax"               // 'none' if using HTTPS and cross-domain
+  }   // Set secure to true if using HTTPS
+}));
 // Database connection configuration
 const db = new Pool({
   user: "postgres",
   host: "localhost",
   database: "Project343DB",
-  password: "TheVCrusher1",
+  password: "postgres123",
   port: 5432,
 });
 
@@ -47,6 +65,7 @@ streamController.injectDB(db);
 eventController.injectDB(db);
 userEventController.injectDB(db);
 userPaymentController.injectDB(db);
+notificationController.injectDB(db);
 
 // =====================================================================
 // CREATE TABLES
@@ -135,6 +154,23 @@ const createUserPaymentsTable = async () => {
   `;
   await db.query(createTableQuery);
   console.log("UserPayments table created successfully.");
+};
+
+const createNotificationsTable = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      event_id INTEGER,
+      message TEXT,
+      is_read BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW(),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL
+    );
+  `;
+  await db.query(createTableQuery);
+  console.log("Notifications table created successfully.");
 };
 
 
@@ -341,6 +377,7 @@ app.post('/check-credentials', async (req, res) => {
   const { email, password } = req.body;
   const valid = await checkUserCredentials(email, password);
   if (valid) {
+    
     res.status(200).json({ message: 'User credentials are valid' });
   } else {
     res.status(401).json({ message: 'Invalid credentials' });
@@ -368,6 +405,7 @@ app.post('/signup', async (req, res) => {
   try {
     await addUser(first, last, password, description, email, role, category);
     res.status(201).json({ message: "User added successfully" });
+    
   } catch (err) {
     res.status(500).json({ message: "Error adding user", error: err.message });
   }
@@ -392,6 +430,8 @@ app.get('/login', async (req, res) => {
     // WARNING: For production, use password hashing instead of plain text.
     if (user.password === password) {
       // ✅ Return the full user object
+      req.session.userID = user.id;
+      loginUserID = user.id;
       return res.status(200).json(user);
     } else {
       return res.status(401).json({ message: "Incorrect password" });
@@ -411,19 +451,19 @@ app.get('/login', async (req, res) => {
 
 app.get("/returnUsers", async (req, res) => {
   const session3 = driver.session();
-  console.log("Is this good ", loginUserID);
+  console.log("Return users session:", req.session);
+  console.log("Return users id:  ", req.session.userID);
+  console.log("Login user id:  ", loginUserID );
   try {
 
     const result = await session3.run(
       `MATCH (u:User)
        WHERE u.id <> $loginUserID
          AND NOT EXISTS {
-           MATCH (u)-[:SOME_RELATIONSHIP]-(otherUser:User {id: $loginUserID})
-         }AND NOT EXISTS {
        MATCH (u)-[:FRIEND]-(otherUser:User {id: $loginUserID})
      }AND NOT EXISTS {
        MATCH (u)-[:REQUEST]->(otherUser:User {id: $loginUserID})
-     }
+    }
        RETURN u.first AS firstName, u.last AS lastName, u.id AS id
       `, { loginUserID }
     ); 
@@ -642,6 +682,20 @@ app.post('/api/payments', async (req, res) => {
   await userPaymentController.addUserPayment(req, res);
 });
 
+// =====================================================================
+// Notifications Endpoints
+// =====================================================================
+
+// Get notifications for a given user (e.g., notifications for updated events)
+app.get('/api/notifications', async (req, res) => {
+  await notificationController.getNotifications(req, res);
+});
+
+// Mark a notification as read (pass notification id as URL parameter)
+app.put('/api/notifications/:notification_id', async (req, res) => {
+  await notificationController.markAsRead(req, res);
+});
+
 
 // =====================================================================
 // Routes using controllers
@@ -667,11 +721,11 @@ server.listen(PORT, () => {
 });
 
 // Create test user on startup
-const first = "Lilian";
-const last = "Thuram";
+const first = "Balotelli";
+const last = "Another";
 const password = "1";
-const description = "New1";
-const email = "merced5555533555Test@example.com";
+const description = "Italy";
+const email = "8888@example.com";
 const preference = "";
 
 (async () => {
@@ -680,6 +734,7 @@ const preference = "";
   await createEventsTable();
   await createUserEventsTable();
   await createUserPaymentsTable();
+  await createNotificationsTable();
   try {
     await addUser(first, last, password, description, email, "organizer", "Event organizers");
   } catch (err) {
