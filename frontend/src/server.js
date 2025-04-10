@@ -59,8 +59,8 @@ app.use(sessiontracking({
 const db = new Pool({
   user: "postgres",
   host: "localhost",
-  database: "Project343DB",
-  password: "mac1",
+  database: "Soen343",
+  password: "Extinctable4*",
   port: 5432,
 });
 
