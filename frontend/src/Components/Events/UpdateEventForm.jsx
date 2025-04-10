@@ -32,7 +32,7 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
   
     const fullDateTime = new Date(`${formData.event_date}T${formData.event_time}`);
   
-    // Prepare only the allowed fields
+    // Prepare the update payload
     const updatedData = {
       title: formData.title,
       description: formData.description,
@@ -42,11 +42,36 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
     };
   
     try {
-      await axios.put(`http://localhost:5002/api/events/${event.id}`, updatedData, {
+      // Step 1: Update the event
+      const response = await axios.put(`http://localhost:5002/api/events/${event.id}`, updatedData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
+  
+      // Step 2: Notify registered users
+      try {
+        const regResponse = await axios.get(`http://localhost:5002/api/userEvents?event_id=${event.id}`);
+        if (regResponse.status === 200) {
+          const registrations = regResponse.data;
+          for (const reg of registrations) {
+            try {
+              await axios.post('http://localhost:5002/api/notifications', {
+                user_id: reg.user_id,
+                event_id: event.id,
+                message: `The event "${updatedData.title}" has been updated.`
+              });
+              console.log(`✅ Notification sent to user ${reg.user_id}`);
+            } catch (notifyErr) {
+              console.error(`❌ Failed to notify user ${reg.user_id}:`, notifyErr);
+            }
+          }
+        } else {
+          console.warn("⚠️ Failed to fetch user registrations for event.");
+        }
+      } catch (queryErr) {
+        console.error("❌ Failed to query userEvents:", queryErr);
+      }
   
       alert('Event updated!');
       onSuccess();
@@ -56,6 +81,7 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
       alert('Failed to update event');
     }
   };
+  
   
 
   return (
