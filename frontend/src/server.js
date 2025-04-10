@@ -26,11 +26,7 @@ app.use(cors({
   credentials: true               // 👈 this enables cookies to be sent
 }));
 
-// app.use(cors());
-app.use(cors({
-  origin: 'http://localhost:3001', // your frontend port
-  credentials: true               // 👈 this enables cookies to be sent
-}));
+
 
 
 // Middleware to parse incoming JSON requests
@@ -433,7 +429,7 @@ app.get('/login', async (req, res) => {
       req.session.userID =user.id;
       console.log("Here is the id",req.session.userID);
       console.log("Info at login: ",req.session);
-      return res.status(200).json(user);
+      return res.status(200).json({ message: "Login successful", user_id: user.id });
     } else {
       return res.status(401).json({ message: "Incorrect password" });
     }
@@ -457,7 +453,6 @@ app.post('/check-session', (req, res) => {
 // =====================================================================
 // Check if user is active 
 // =====================================================================
-
 
 
 // =====================================================================
