@@ -146,10 +146,14 @@ const SignUp = () => {
   
       if (response.ok) {
         const user = await response.json();
-        login(user); // ✅ this updates context and localStorage (in your context logic)
-        console.log("Login successful:", user);
-        navigate("/home");
-      } else {
+        localStorage.setItem("user_id", user.user_id);
+        localStorage.setItem("user_role", role);
+        localStorage.setItem("user_category", formData.category); // ⬅️ Add this
+        console.log("Login Successful:", user);
+        navigate("/teams");
+      }
+      
+       else {
         const data = await response.json();
         const errorMessage = data.message || "Login failed";
         setValidationErrors({

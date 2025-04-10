@@ -596,6 +596,64 @@ app.get("/friends", async (req, res) => {
   }
 });
 
+// =====================================================================
+// API endpoints for the Executive Admin: BEGIN
+// =====================================================================
+
+// Get all users
+app.get('/users', async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Failed to fetch users:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// Delete a user
+app.delete('/users/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    await db.query('DELETE FROM users WHERE id = $1', [id]);
+    res.json({ message: "User deleted" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+// Update a user
+app.put('/users/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { first, last, email, password, role, category } = req.body;
+  try {
+    await db.query(
+      `UPDATE users SET first = $1, last = $2, email = $3, password = $4, role = $5, category = $6 WHERE id = $7`,
+      [first, last, email, password, role, category, id]
+    );
+    res.json({ message: "User updated" });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+// Optional: POST endpoint for admins to add users
+app.post('/add-user-admin', async (req, res) => {
+  const { first, last, email, password, role, category, description } = req.body;
+  try {
+    await addUser(first, last, password, description, email, role, category);
+    res.status(201).json({ message: "User added" });
+  } catch (err) {
+    console.error("Admin add error:", err);
+    res.status(500).json({ message: "Failed to add user", error: err.message });
+  }
+});
+// =====================================================================
+// API endpoints for the Executive Admin: END 
+// =====================================================================
+
 
 // =====================================================================
 // Routes using controllers
@@ -634,6 +692,50 @@ const preference = "";
     console.error("Test user insertion error (likely duplicate):", err.message);
   }
 })();
+
+// Create test admin users on startup
+(async () => {
+  await createUserTable();
+  await createStreamsTable();
+
+  const predefinedAdmins = [
+    {
+      first: "Tech",
+      last: "Admin",
+      password: "admin123",
+      description: "System maintainer",
+      email: "techadmin@example.com",
+      role: "administrator",
+      category: "Technical personnel",
+    },
+    {
+      first: "Exec",
+      last: "Admin",
+      password: "admin123",
+      description: "Executive manager",
+      email: "execadmin@example.com",
+      role: "administrator",
+      category: "Executive personnel",
+    }
+  ];
+
+  for (const admin of predefinedAdmins) {
+    try {
+      await addUser(
+        admin.first,
+        admin.last,
+        admin.password,
+        admin.description,
+        admin.email,
+        admin.role,
+        admin.category
+      );
+    } catch (err) {
+      console.error(`Admin insertion error (${admin.email}):`, err.message);
+    }
+  }
+})();
+
 
 // Export for optional reuse
 module.exports = { db, checkUserCredentials };

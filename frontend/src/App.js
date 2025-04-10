@@ -3,11 +3,10 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "r
 
 import LandingPage from "./Components/LandingPage/LandingPage";
 import HeaderExport from "./Components/Header/HeaderExport";
-// import HeaderMain from "./Components/Header/HeaderMain"; 
 import Footer from "./Components/Footer/Footer";
 import NavBar from "./Components/NavBar";
 import LoginForm from "./Components/LoginForm";
-import SignUp from "./Components/SignUp/SignUp.js"; // First sign up page
+import SignUp from "./Components/SignUp/SignUp.js";
 import AboutUs from "./Components/AboutUsPage/AboutUs";
 import Contact from "./Components/Contact/Contact";
 import UserAnalytics from './Components/Analytics/UserAnalytics';
@@ -18,12 +17,18 @@ import AccountSettings from "./Components/AccountSettings/AccountSettings";
 import Streamer from "./Components/Streamer"; 
 import Viewer from "./Components/Viewer";
 
+import AdminTechnicalDashboard from "./Components/Dashboards/AdminTechnicalDashboard";
+
 import { UserProvider } from "./context/UserContext"; 
 
-import "./App.css"; // any global styles
+import "./App.css";
+
+// Admin pages
+const TechnicalDashboard = () => <h1>Technical Admin Dashboard</h1>;
+const ExecutiveDashboard = () => <h1>Executive Admin Dashboard</h1>;
 
 function Home() {
-  return <HomePage />; 
+  return <HomePage />;
 }
 
 function About() {
@@ -42,11 +47,12 @@ function MainLayout() {
     location.pathname === "/signup" ||
     location.pathname === "/landing";
 
+  const userRole = localStorage.getItem("user_role");
+  const userCategory = localStorage.getItem("user_category");
+
   return (
     <>
       {!hideNavOnAuthPages && <NavBar />}
-      
-      {/* Render LandingPage outside of the .home div */}
       {location.pathname === "/landing" ? (
         <LandingPage />
       ) : (
@@ -65,6 +71,25 @@ function MainLayout() {
             <Route path="/message" element={<Message />} />
             <Route path="/streamer" element={<Streamer />} />
             <Route path="/viewer" element={<Viewer />} />
+
+            {/* 🛡️ Admin Dashboards */}
+            <Route
+              path="/admin-technical"
+              element={
+                userRole === "administrator" && userCategory === "Technical personnel" 
+                  ? <AdminTechnicalDashboard />
+                  : <Navigate to="/home" />
+              }
+            />
+
+            <Route
+              path="/admin-executive"
+              element={
+                userRole === "administrator" && userCategory === "Executive personnel" 
+                  ? <ExecutiveDashboard />
+                  : <Navigate to="/home" />
+              }
+            />
           </Routes>
         </div>
       )}
@@ -72,10 +97,9 @@ function MainLayout() {
   );
 }
 
-
 function App() {
   return (
-    <UserProvider> {/* ✅ Wrap the whole app */}
+    <UserProvider>
       <Router>
         <Routes>
           <Route path="/*" element={<MainLayout />} />
