@@ -22,7 +22,7 @@ class PayPalPayment extends PaymentStrategy {
 }
   
 const FinancialManager = () => {
-  const userId = 1; // Replace with actual authenticated attendee user ID
+  const userId = 2; // Replace with actual authenticated attendee user ID
   
   // State for unpaid registrations (status === "Registered")
   const [unpaidRegistrations, setUnpaidRegistrations] = useState([]);
