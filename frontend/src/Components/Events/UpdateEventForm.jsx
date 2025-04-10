@@ -1,5 +1,7 @@
+// /src/Events/UpdateEventForm.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './CreateEventForm.css'; // Reuse same styling.
 
 const UpdateEventForm = ({ event, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -8,6 +10,7 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
     event_date: '',
     event_time: '',
     location: '',
+    price: '',
     status: '',
   });
 
@@ -19,7 +22,8 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
       event_date: date,
       event_time: time.slice(0, 5),
       location: event.location,
-      status: event.status || 'upcoming'
+      price: event.price ? event.price.toString() : '', // price field
+      status: event.status || 'Upcoming'
     });
   }, [event]);
 
@@ -29,27 +33,25 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const fullDateTime = new Date(`${formData.event_date}T${formData.event_time}`);
-  
-    // Prepare the update payload
     const updatedData = {
       title: formData.title,
       description: formData.description,
       event_date: fullDateTime.toISOString(),
       location: formData.location,
-      status: formData.status || "upcoming"
+      price: parseFloat(formData.price) || 0,
+      status: formData.status || "Upcoming"
     };
-  
+
     try {
-      // Step 1: Update the event
       const response = await axios.put(`http://localhost:5002/api/events/${event.id}`, updatedData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-  
-      // Step 2: Notify registered users
+      
+      // After updating, notify registered users.
       try {
         const regResponse = await axios.get(`http://localhost:5002/api/userEvents?event_id=${event.id}`);
         if (regResponse.status === 200) {
@@ -61,18 +63,18 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
                 event_id: event.id,
                 message: `The event "${updatedData.title}" has been updated.`
               });
-              console.log(`✅ Notification sent to user ${reg.user_id}`);
+              console.log(`Notification sent to user ${reg.user_id}`);
             } catch (notifyErr) {
-              console.error(`❌ Failed to notify user ${reg.user_id}:`, notifyErr);
+              console.error(`Failed to notify user ${reg.user_id}:`, notifyErr);
             }
           }
         } else {
-          console.warn("⚠️ Failed to fetch user registrations for event.");
+          console.warn("Failed to fetch user registrations for event.");
         }
       } catch (queryErr) {
-        console.error("❌ Failed to query userEvents:", queryErr);
+        console.error("Failed to query userEvents:", queryErr);
       }
-  
+      
       alert('Event updated!');
       onSuccess();
       onClose();
@@ -81,8 +83,6 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
       alert('Failed to update event');
     }
   };
-  
-  
 
   return (
     <div className="create-event-form">
@@ -93,10 +93,11 @@ const UpdateEventForm = ({ event, onClose, onSuccess }) => {
         <input type="date" name="event_date" value={formData.event_date} onChange={handleChange} required />
         <input type="time" name="event_time" value={formData.event_time} onChange={handleChange} required />
         <input name="location" value={formData.location} onChange={handleChange} required />
+        <input name="price" type="number" step="0.01" value={formData.price} placeholder="Price" onChange={handleChange} required />
         <select name="status" value={formData.status} onChange={handleChange}>
-          <option value="upcoming">Upcoming</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="Upcoming">Upcoming</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
         </select>
         <button type="submit">Save Changes</button>
         <button type="button" onClick={onClose}>Cancel</button>

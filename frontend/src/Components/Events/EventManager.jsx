@@ -7,7 +7,7 @@ import UpdateEventForm from './UpdateEventForm';
 
 // Dummy user role for demonstration ("organizer" or "attendee")
 // In a real app, replace this with your authenticated user context.
-const userRole = "organizer"; // Change to "attendee" to test attendee flow
+const userRole = "attendee"; // Change to "attendee" to test attendee flow
 
 // --------------------
 // Command Pattern Classes for Organizer Flow (DB Implementation)

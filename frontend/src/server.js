@@ -114,6 +114,7 @@ const createEventsTable = async () => {
       description TEXT,
       event_date TIMESTAMP NOT NULL,
       status VARCHAR(50) DEFAULT 'Upcoming',
+      price NUMERIC(10,2) DEFAULT 0,
       organizer_id INTEGER,
       location VARCHAR(100) DEFAULT 'Concordia University'
     );
@@ -620,22 +621,53 @@ app.delete('/api/events/:id', async (req, res) => {
   await eventController.deleteEvent(req, res);
 });
 
+// Return user_events joined with events for the fields we need:
 app.get('/api/userEvents', async (req, res) => {
   const { event_id, user_id } = req.query;
   try {
+    // We'll build a WHERE clause if event_id or user_id is provided
     let query = `
-      SELECT * FROM user_events
-      ${event_id ? 'WHERE event_id = $1' : user_id ? 'WHERE user_id = $1' : ''}
-      ORDER BY registration_date DESC;
+      SELECT 
+        ue.id AS registration_id,
+        ue.status,
+        ue.user_id,
+        ue.event_id,
+        ue.registration_date,
+        e.title,
+        e.event_date,
+        e.price,
+        e.description,
+        e.location
+      FROM user_events ue
+      INNER JOIN events e ON ue.event_id = e.id
     `;
-    const param = event_id || user_id;
-    const result = await db.query(query, [param]);
+
+    const conditions = [];
+    const params = [];
+
+    if (event_id) {
+      params.push(event_id);
+      conditions.push(` ue.event_id = $${params.length} `);
+    }
+    if (user_id) {
+      params.push(user_id);
+      conditions.push(` ue.user_id = $${params.length} `);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(` AND `);
+    }
+
+    query += ` ORDER BY ue.registration_date DESC;`;
+
+    const result = await db.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching user events:", err);
     res.status(500).json({ error: "Failed to fetch user events" });
   }
 });
+
 
 app.put('/api/userEvents/:registration_id', async (req, res) => {
   const { registration_id } = req.params;
@@ -668,7 +700,13 @@ app.delete('/api/userEvents/:id', async (req, res) => {
 app.get('/api/payments', async (req, res) => {
   const { user_id } = req.query;
   try {
-    const query = "SELECT * FROM user_payments WHERE user_id = $1 ORDER BY payment_date DESC;";
+    const query = `
+      SELECT up.*, e.title AS eventTitle
+      FROM user_payments up
+      LEFT JOIN events e ON up.event_id = e.id
+      WHERE up.user_id = $1
+      ORDER BY up.payment_date DESC;
+    `;
     const result = await db.query(query, [user_id]);
     res.json(result.rows);
   } catch (err) {
@@ -677,9 +715,30 @@ app.get('/api/payments', async (req, res) => {
   }
 });
 
+
+app.get('/api/eventPayments', async (req, res) => {
+  const { organizer_id } = req.query;
+  try {
+    const query = `
+      SELECT up.*, e.title AS eventTitle
+      FROM user_payments up
+      INNER JOIN events e ON up.event_id = e.id
+      WHERE e.organizer_id = $1
+      ORDER BY up.payment_date DESC;
+    `;
+    const result = await db.query(query, [organizer_id]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching event payments:", err);
+    res.status(500).json({ error: "Failed to fetch event payments" });
+  }
+});
+
 app.post('/api/payments', async (req, res) => {
   await userPaymentController.addUserPayment(req, res);
 });
+
+
 
 // =====================================================================
 // Notifications Endpoints
