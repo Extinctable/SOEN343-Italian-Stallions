@@ -15,7 +15,9 @@ const getEvents = async (req, res) => {
 };
 
 const addEvent = async (req, res) => {
-  const { title, description, event_date, status, organizer_id, location } = req.body;
+  const { title, description, event_date, status, location } = req.body;
+  const organizer_id = 1; // Hardcoded organizer ID
+
   try {
     const result = await db.query(
       `INSERT INTO events (title, description, event_date, status, organizer_id, location)
