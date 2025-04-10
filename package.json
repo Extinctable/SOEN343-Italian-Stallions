@@ -2,10 +2,13 @@
   "dependencies": {
     "axios": "^1.8.4",
     "chart.js": "^4.4.8",
+    "connect-redis": "^8.0.2",
+    "express-session": "^1.18.1",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.3.1",
     "react-scripts": "^5.0.1",
+    "redis": "^4.7.0",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0"
   }

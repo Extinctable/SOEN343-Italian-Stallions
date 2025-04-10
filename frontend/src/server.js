@@ -26,9 +26,27 @@ app.use(cors({
   credentials: true               // 👈 this enables cookies to be sent
 }));
 
+// app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3001', // your frontend port
+  credentials: true               // 👈 this enables cookies to be sent
+}));
+
 
 // Middleware to parse incoming JSON requests
 app.use(express.json());
+// Set up session middleware
+app.use(sessiontracking({
+
+  secret: 'your-secret-key',  // A secret key for session encryption
+  resave: false,              // Don't force re-saving of session if nothing changed
+  saveUninitialized: true,    // Save session if it is new, even if not modified
+  cookie: {
+    secure: false,                // true in HTTPS
+    httpOnly: true,
+    sameSite: "lax"               // 'none' if using HTTPS and cross-domain
+  }   // Set secure to true if using HTTPS
+}));
 // Set up session middleware
 app.use(sessiontracking({
 
@@ -357,6 +375,7 @@ app.post('/check-credentials', async (req, res) => {
   const valid = await checkUserCredentials(email, password);
   if (valid) {
     
+    
     res.status(200).json({ message: 'User credentials are valid' });
   } else {
     res.status(401).json({ message: 'Invalid credentials' });
@@ -411,6 +430,9 @@ app.get('/login', async (req, res) => {
       // ✅ Return the full user object
       req.session.userID = user.id;
       loginUserID = user.id;
+      req.session.userID =user.id;
+      console.log("Here is the id",req.session.userID);
+      console.log("Info at login: ",req.session);
       return res.status(200).json(user);
     } else {
       return res.status(401).json({ message: "Incorrect password" });
@@ -420,6 +442,22 @@ app.get('/login', async (req, res) => {
     return res.status(500).json({ message: "Error during login", error: err.message });
   }
 });
+
+// =====================================================================
+// Check if user is active 
+// =====================================================================
+
+app.post('/check-session', (req, res) => {
+  if (req.session.userID) {
+    res.status(200).json({ message: 'User is logged in', userID: req.session.userID });
+  } else {
+    res.status(401).json({ message: 'No active session' });
+  }
+});
+// =====================================================================
+// Check if user is active 
+// =====================================================================
+
 
 
 // =====================================================================
@@ -433,6 +471,8 @@ app.get("/returnUsers", async (req, res) => {
   console.log("Return users session:", req.session);
   console.log("Return users id:  ", req.session.userID);
   console.log("Login user id:  ", loginUserID );
+  console.log("Return users session:", req.session);
+  console.log("Return users id:  ", req.session.userID);
   try {
 
     const result = await session3.run(
