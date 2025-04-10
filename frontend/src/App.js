@@ -17,6 +17,8 @@ import HomePage from "./Components/HomePage/HomePage.jsx";
 import AccountSettings from "./Components/AccountSettings/AccountSettings";
 import FinancialManager from "./Components/Finance/FinancialManager.jsx";
 import EventManager from "./Components/Events/EventManager.jsx";
+import Notifications from './Components/Notifications/Notifications';
+
 
 import Streamer from "./Components/Streamer"; 
 import Viewer from "./Components/Viewer";
@@ -70,6 +72,8 @@ function MainLayout() {
             <Route path="/EventManager" element={<EventManager />} />
             <Route path="/streamer" element={<Streamer />} />
             <Route path="/viewer" element={<Viewer />} />
+            <Route path="/notifications" element={<Notifications />} />
+
           </Routes>
         </div>
       )}

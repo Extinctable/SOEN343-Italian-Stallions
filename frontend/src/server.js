@@ -14,6 +14,7 @@ const streamController = require('./controllers/streamController');
 const eventController = require('./controllers/eventController');
 const userEventController = require('./controllers/userEventController');
 const userPaymentController = require('./controllers/userPaymentController');
+const notificationController = require('./controllers/notificationController');
 const { Server } = require("socket.io");
 const http = require("http");
 const axios = require("axios");         // (NEW) for openAI HTTP calls
@@ -64,6 +65,7 @@ streamController.injectDB(db);
 eventController.injectDB(db);
 userEventController.injectDB(db);
 userPaymentController.injectDB(db);
+notificationController.injectDB(db);
 
 // =====================================================================
 // CREATE TABLES
@@ -152,6 +154,23 @@ const createUserPaymentsTable = async () => {
   `;
   await db.query(createTableQuery);
   console.log("UserPayments table created successfully.");
+};
+
+const createNotificationsTable = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      event_id INTEGER,
+      message TEXT,
+      is_read BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW(),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL
+    );
+  `;
+  await db.query(createTableQuery);
+  console.log("Notifications table created successfully.");
 };
 
 
@@ -663,6 +682,20 @@ app.post('/api/payments', async (req, res) => {
   await userPaymentController.addUserPayment(req, res);
 });
 
+// =====================================================================
+// Notifications Endpoints
+// =====================================================================
+
+// Get notifications for a given user (e.g., notifications for updated events)
+app.get('/api/notifications', async (req, res) => {
+  await notificationController.getNotifications(req, res);
+});
+
+// Mark a notification as read (pass notification id as URL parameter)
+app.put('/api/notifications/:notification_id', async (req, res) => {
+  await notificationController.markAsRead(req, res);
+});
+
 
 // =====================================================================
 // Routes using controllers
@@ -701,6 +734,7 @@ const preference = "";
   await createEventsTable();
   await createUserEventsTable();
   await createUserPaymentsTable();
+  await createNotificationsTable();
   try {
     await addUser(first, last, password, description, email, "organizer", "Event organizers");
   } catch (err) {

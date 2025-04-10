@@ -111,6 +111,13 @@ function NavBar() {
                 <span className="text nav-text">Events</span>
               </NavLink>
             </li>
+            <li className="nav-link">
+              <NavLink to="/notifications" className={({ isActive }) => (isActive ? "active-link" : "")}>
+                <i className="bx bx-bell icon"></i>
+                <span className="text nav-text">Notifications</span>
+              </NavLink>
+            </li>
+
 
           </ul>
         </div>
