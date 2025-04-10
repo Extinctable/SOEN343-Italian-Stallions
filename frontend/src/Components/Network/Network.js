@@ -34,7 +34,10 @@ const Network = () => {
         const friendRequests = await requestResponse.json();
   
         // Fetch all users
-        const usersResponse = await fetch("http://localhost:5002/returnUsers");
+        const usersResponse = await fetch("http://localhost:5002/returnUsers", {
+          method: "GET",
+          credentials: "include" // 👈 this is critical
+        });
         if (!usersResponse.ok) {
           throw new Error("Failed to fetch users");
         }
