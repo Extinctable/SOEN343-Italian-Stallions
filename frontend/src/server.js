@@ -254,6 +254,61 @@ const addToNeo4j = async ({ id, first, last, description, email }) => {
 };
 
 let loginUserID; // Global variable to store logged-in user ID
+// =====================================================================
+// Getting the id 
+// =====================================================================
+
+app.get('/me', (req, res) => {
+  const loggedInUserId = loginUserID; 
+  res.json({ userId: loggedInUserId });
+});
+
+// =====================================================================
+// MESSAGES Refresh
+// =====================================================================
+
+
+app.get("/messages/:otherUserID", async (req, res) => {
+  const session54 = driver.session();
+ 
+  const otherUserID = parseInt(req.params.otherUserID);
+
+  console.log("otherUserID======== ",otherUserID);
+  console.log("loginUserID========= " ,loginUserID);
+  if (!loginUserID) {
+    return res.status(401).send("Unauthorized: No session found.");
+  }
+
+  try {
+    const result = await session54.run(
+      `
+      MATCH (u1:User {id: $loginUserID})-[m:MESSAGE]->(u2:User {id: $otherUserID})
+RETURN m.text AS text, m.timestamp AS timestamp, u1.id AS sender
+UNION
+MATCH (u2:User {id: $otherUserID})-[m:MESSAGE]->(u1:User {id: $loginUserID})
+RETURN m.text AS text, m.timestamp AS timestamp, u2.id AS sender
+ORDER BY timestamp
+      `,
+      { loginUserID: loginUserID, otherUserID: otherUserID }
+    );
+    console.log("MESSAGES========= " ,result);
+    const messages = result.records.map(record => ({
+      text: record.get("text"),
+      timestamp: record.get("timestamp"),
+      sender: record.get("sender")
+    }));
+    console.log("server messages :   ",messages);
+    res.json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).send("Server error");
+  } finally {
+    await session54.close();
+  }
+});
+
+
+
 
 // =====================================================================
 // ORIGINAL ENDPOINTS (Modified as needed)
