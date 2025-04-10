@@ -24,9 +24,10 @@ const addEvent = async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error("Failed to add event:", err);
-    res.status(500).json({ error: "Failed to add event" });
+    console.error("❌ Failed to create event:", err.stack || err.message || err);
+    res.status(500).json({ message: 'Error creating event', error: err.message });
   }
+  
 };
 
 const updateEvent = async (req, res) => {

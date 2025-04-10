@@ -21,6 +21,7 @@
     "css-modules": "^0.3.0",
     "dotenv": "^16.4.7",
     "gsap": "^3.12.7",
+    "jspdf": "^3.0.1",
     "neo4j-driver": "^5.28.1",
     "openai": "^4.89.0",
     "path-browserify": "^1.0.1",

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './EventManager.css';
 import { generatePDFReport } from '../../utils/reportGenerator';
+import CreateEventForm from './CreateEventForm';
+
 
 // Dummy user role for demonstration ("organizer" or "attendee")
 // In a real app, replace this with your authenticated user context.
@@ -146,6 +148,25 @@ const EventManager = () => {
   const [allEvents, setAllEvents] = useState([]);
   const [availableEvents, setAvailableEvents] = useState([]);
 
+  // Organizer Form Creation
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  
+  // New fetchEvents function
+  const fetchEvents = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/events', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setEvents(data);
+    } catch (err) {
+      console.error("Failed to fetch events:", err);
+    }
+  };
+
   // ------------------------
   // Organizer Flow Functions
   // ------------------------
@@ -164,6 +185,7 @@ const EventManager = () => {
   useEffect(() => {
     if (userRole === "organizer") {
       fetchOrganizerEvents();
+      fetchEvents();
     }
   }, []);
 
@@ -225,6 +247,7 @@ const EventManager = () => {
     await lastCommand.undo();
     setCommandHistory(prev => prev.slice(0, -1));
   };
+
 
   // ------------------------
   // Attendee Flow Functions
@@ -310,9 +333,19 @@ const EventManager = () => {
       {userRole === "organizer" ? (
         <>
           <div className="organizer-actions">
-            <button onClick={handleCreateEvent}>Create Event</button>
+            <button onClick={() => setShowCreateForm(true)}>Create Event</button>
             <button onClick={handleUndo}>Undo Last Command</button>
+
+            {showCreateForm && (
+              <CreateEventForm
+                onClose={() => setShowCreateForm(false)}
+                onSuccess={() => {
+                  if (typeof fetchEvents === 'function') fetchEvents();
+                }}
+              />
+            )}
           </div>
+
           <div className="events-list">
             {events.length === 0 ? (
               <p>No events available.</p>
