@@ -1,11 +1,10 @@
-
+// /controllers/notificationController.js
 let db;
 
 const injectDB = (pgInstance) => {
   db = pgInstance;
 };
 
-// Adds a notification for a user regarding an event update.
 const addNotification = async (notificationData) => {
   const { user_id, event_id, message } = notificationData;
   const insertQuery = `
@@ -17,7 +16,6 @@ const addNotification = async (notificationData) => {
   return result.rows[0];
 };
 
-// Endpoint function: Get notifications for a user.
 const getNotifications = async (req, res) => {
   const { user_id } = req.query;
   try {
@@ -32,7 +30,6 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// Endpoint function: Mark a notification as read.
 const markAsRead = async (req, res) => {
   const { notification_id } = req.params;
   try {

@@ -50,7 +50,7 @@ const db = new Pool({
   user: "postgres",
   host: "localhost",
   database: "Project343DB",
-  password: "TheVCrusher1",
+  password: "postgres123",
   port: 5432,
 });
 
@@ -621,16 +621,15 @@ app.delete('/api/events/:id', async (req, res) => {
 });
 
 app.get('/api/userEvents', async (req, res) => {
-  const { user_id } = req.query;
+  const { event_id, user_id } = req.query;
   try {
-    // Join user_events with events to return full event details, including status.
-    const query = `
-      SELECT e.*, ue.id as registration_id, ue.status
-      FROM events e
-      INNER JOIN user_events ue ON e.id = ue.event_id
-      WHERE ue.user_id = $1;
+    let query = `
+      SELECT * FROM user_events
+      ${event_id ? 'WHERE event_id = $1' : user_id ? 'WHERE user_id = $1' : ''}
+      ORDER BY registration_date DESC;
     `;
-    const result = await db.query(query, [user_id]);
+    const param = event_id || user_id;
+    const result = await db.query(query, [param]);
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching user events:", err);
@@ -695,6 +694,19 @@ app.get('/api/notifications', async (req, res) => {
 app.put('/api/notifications/:notification_id', async (req, res) => {
   await notificationController.markAsRead(req, res);
 });
+
+// Add endpoint to create a notification.
+app.post('/api/notifications', async (req, res) => {
+  try {
+    const notification = await notificationController.addNotification(req.body);
+    res.status(201).json(notification);
+  } catch (err) {
+    console.error("Error creating notification:", err);
+    res.status(500).json({ error: "Failed to create notification" });
+  }
+});
+
+
 
 
 // =====================================================================

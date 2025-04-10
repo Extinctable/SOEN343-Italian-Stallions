@@ -59,17 +59,18 @@ class CreateEventCommand extends EventCommand {
   }
 }
 
-// Update Event Command: calls PUT /api/events/:id.
+// Update Event Command: calls PUT /api/events/:id and notifies registered users by querying user_events.
 class UpdateEventCommand extends EventCommand {
   constructor(eventId, newData, updateEventCallback, originalData) {
     super();
     this.eventId = eventId;
     this.newData = newData;
     this.updateEventCallback = updateEventCallback;
-    this.originalData = originalData; // stored for undo
+    this.originalData = originalData; // Stored for undo.
   }
   async execute() {
     try {
+      // Update the event.
       const response = await fetch(`http://localhost:5002/api/events/${this.eventId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -78,6 +79,42 @@ class UpdateEventCommand extends EventCommand {
       const updatedEvent = await response.json();
       this.updateEventCallback(this.eventId, updatedEvent);
       console.log("Updated event:", updatedEvent);
+      
+      // --- Notification Functionality ---
+      // Query the user_events endpoint by event_id.
+      try {
+        console.log(`Fetching user events with event_id: ${this.eventId}`);
+        const regResponse = await fetch(`http://localhost:5002/api/userEvents?event_id=${this.eventId}`);
+        console.log("regResponse status:", regResponse.status);
+        if (regResponse.ok) {
+          const registrations = await regResponse.json();
+          // For each registration, send a notification.
+          console.log("Registrations for event:", registrations);
+          registrations.forEach(async (registration) => {
+            try {
+              const notifyResponse = await fetch('http://localhost:5002/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  user_id: registration.user_id,
+                  event_id: this.eventId,
+                  message: `The event "${updatedEvent.title}" has been updated.`
+                })
+              });
+              const notifyResult = await notifyResponse.json();
+              console.log(`Notification sent to user ${registration.user_id}:`, notifyResult);
+            } catch (notifyError) {
+              console.error("Error sending notification for user", registration.user_id, notifyError);
+            }
+          });
+        } else {
+          console.error("Failed to fetch registrations for event", this.eventId);
+        }
+      } catch (queryError) {
+        console.error("Error querying user_events for event", this.eventId, queryError);
+      }
+      // --- End Notification Functionality ---
+      
     } catch (err) {
       console.error("Error updating event:", err);
     }
@@ -93,10 +130,11 @@ class UpdateEventCommand extends EventCommand {
       this.updateEventCallback(this.eventId, restoredEvent);
       console.log("Undid update for event:", this.eventId);
     } catch (err) {
-      console.error("Error undoing update:", err);
+      console.error("Error undoing update for event:", err);
     }
   }
 }
+
 
 // Delete Event Command: calls DELETE /api/events/:id.
 class DeleteEventCommand extends EventCommand {

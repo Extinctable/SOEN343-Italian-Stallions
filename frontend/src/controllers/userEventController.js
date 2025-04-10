@@ -6,7 +6,22 @@ const injectDB = (pgInstance) => {
 
 const getUserEvents = async (req, res) => {
   try {
-    const result = await db.query("SELECT * FROM user_events;");
+    // Check for query parameters: event_id takes precedence, then user_id.
+    const { event_id, user_id } = req.query;
+    let query = "SELECT * FROM user_events";
+    let params = [];
+
+    if (event_id) {
+      query += " WHERE event_id = $1";
+      params.push(event_id);
+    } else if (user_id) {
+      query += " WHERE user_id = $1";
+      params.push(user_id);
+    }
+
+    query += " ORDER BY registration_date DESC;";
+
+    const result = await db.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error("Failed to get user events:", err);
