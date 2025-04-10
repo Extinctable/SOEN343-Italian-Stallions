@@ -50,7 +50,7 @@ const db = new Pool({
   user: "postgres",
   host: "localhost",
   database: "Project343DB",
-  password: "postgres123",
+  password: "TheVCrusher1",
   port: 5432,
 });
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './EventManager.css';
 import { generatePDFReport } from '../../utils/reportGenerator';
 import CreateEventForm from './CreateEventForm';
+import UpdateEventForm from './UpdateEventForm';
 
 
 // Dummy user role for demonstration ("organizer" or "attendee")
@@ -150,6 +151,9 @@ const EventManager = () => {
 
   // Organizer Form Creation
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // Update Event Form
+  const [editingEvent, setEditingEvent] = useState(null);
   
   // New fetchEvents function
   const fetchEvents = async () => {
@@ -344,6 +348,18 @@ const EventManager = () => {
                 }}
               />
             )}
+
+            {editingEvent && (
+              <UpdateEventForm
+                event={editingEvent}
+                onClose={() => setEditingEvent(null)}
+                onSuccess={() => {
+                  if (typeof fetchEvents === 'function') fetchEvents();
+                  setEditingEvent(null);
+                }}
+              />
+            )}
+
           </div>
 
           <div className="events-list">
@@ -357,7 +373,7 @@ const EventManager = () => {
                   <p><strong>Date:</strong> {new Date(event.event_date).toLocaleString()}</p>
                   <p>Status: {event.status}</p>
                   <div className="organizer-controls">
-                    <button onClick={() => handleUpdateEvent(event.id)}>Update</button>
+                    <button onClick={() => setEditingEvent(event)}>Update</button>
                     <button onClick={() => handleDeleteEvent(event.id)}>Delete</button>
                   </div>
                 </div>
