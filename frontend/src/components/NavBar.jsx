@@ -2,31 +2,22 @@ import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import "./NavBar.css";
 
-/**
- * A direct React conversion of the original HTML structure:
- * - <nav class="sidebar close"> ...
- * - We replace <a href="#"> with <NavLink to="/...">
- * - We keep the .close toggle for the collapsed sidebar
- * - We keep a "dark" class on <body> for dark mode
- */
 function NavBar() {
   const [isSidebarClosed, setIsSidebarClosed] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-
-  // For the "Dark mode" text label
   const [modeText, setModeText] = useState("Dark mode");
 
-  // Toggle the sidebar "close" class
+  const userRole = localStorage.getItem("user_role");
+  const userCategory = localStorage.getItem("user_category");
+
   const handleSidebarToggle = () => {
     setIsSidebarClosed((prev) => !prev);
   };
 
-  // Toggle dark mode on the body element
   const handleModeSwitch = () => {
     setDarkMode((prev) => !prev);
   };
 
-  // Update the body class and text label whenever darkMode changes
   useEffect(() => {
     if (darkMode) {
       document.body.classList.add("dark");
@@ -42,8 +33,7 @@ function NavBar() {
       <header>
         <div className="image-text">
           <span className="image">
-           
-          <img src={darkMode ? "./Assets/stallion-logo-darkmode.png" : "./Assets/stallion-logo.webp"} alt="Stallion Logo" />
+            <img src={darkMode ? "./Assets/stallion-logo-darkmode.png" : "./Assets/stallion-logo.webp"} alt="Stallion Logo" />
           </span>
           <div className="text logo-text">
             <span className="name">StallionSpeaks</span>
@@ -54,7 +44,6 @@ function NavBar() {
 
       <div className="menu-bar">
         <div className="menu">
-          {/* MENU LINKS */}
           <ul className="menu-links">
             <li className="nav-link">
               <NavLink to="/home" className={({ isActive }) => (isActive ? "active-link" : "")}>
@@ -72,7 +61,7 @@ function NavBar() {
 
             <li className="nav-link">
               <NavLink to="/Analytics" className={({ isActive }) => (isActive ? "active-link" : "")}>
-              <i className="bx bx-bar-chart-alt-2 icon"></i>
+                <i className="bx bx-bar-chart-alt-2 icon"></i>
                 <span className="text nav-text">Analytics</span>
               </NavLink>
             </li>
@@ -90,7 +79,7 @@ function NavBar() {
                 <span className="text nav-text">Network</span>
               </NavLink>
             </li>
-            
+
             <li className="nav-link">
               <NavLink to="/Message" className={({ isActive }) => (isActive ? "active-link" : "")}>
                 <i className="bx bx-message icon"></i>
@@ -98,10 +87,27 @@ function NavBar() {
               </NavLink>
             </li>
 
+            {/* Admin Dashboards */}
+            {userRole === "administrator" && userCategory === "Technical personnel" && (
+              <li className="nav-link">
+                <NavLink to="/admin-technical" className={({ isActive }) => (isActive ? "active-link" : "")}>
+                  <i className="bx bx-wrench icon"></i>
+                  <span className="text nav-text">Technical Panel</span>
+                </NavLink>
+              </li>
+            )}
+
+            {userRole === "administrator" && userCategory === "Executive personnel" && (
+              <li className="nav-link">
+                <NavLink to="/admin-executive" className={({ isActive }) => (isActive ? "active-link" : "")}>
+                  <i className="bx bx-briefcase icon"></i>
+                  <span className="text nav-text">Executive Panel</span>
+                </NavLink>
+              </li>
+            )}
           </ul>
         </div>
 
-        {/* BOTTOM CONTENT (Logout + Dark Mode Switch) */}
         <div className="bottom-content">
           <li>
             <a href="/landing">

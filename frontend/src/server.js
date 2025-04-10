@@ -18,18 +18,49 @@ const FormData = require("form-data");  // (NEW) for multipart form
 const fs = require("fs");               // (NEW) for saving chunk
 const path = require("path");           // (NEW) path ops
 const { v4: uuidv4 } = require("uuid"); // (NEW) unique temp filenames
+const sessiontracking = require('express-session');
 // Enable CORS for all routes
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3001', // your frontend port
+  credentials: true               // 👈 this enables cookies to be sent
+}));
+
+
+
 
 // Middleware to parse incoming JSON requests
 app.use(express.json());
+// Set up session middleware
+app.use(sessiontracking({
 
+  secret: 'your-secret-key',  // A secret key for session encryption
+  resave: false,              // Don't force re-saving of session if nothing changed
+  saveUninitialized: true,    // Save session if it is new, even if not modified
+  cookie: {
+    secure: false,                // true in HTTPS
+    httpOnly: true,
+    sameSite: "lax"               // 'none' if using HTTPS and cross-domain
+  }   // Set secure to true if using HTTPS
+}));
+// Set up session middleware
+app.use(sessiontracking({
+
+  secret: 'your-secret-key',  // A secret key for session encryption
+  resave: false,              // Don't force re-saving of session if nothing changed
+  saveUninitialized: true,    // Save session if it is new, even if not modified
+  cookie: {
+    secure: false,                // true in HTTPS
+    httpOnly: true,
+    sameSite: "lax"               // 'none' if using HTTPS and cross-domain
+  }   // Set secure to true if using HTTPS
+}));
 // Database connection configuration
 const db = new Pool({
   user: "postgres",
   host: "localhost",
   database: "Project343DB",
-  password: "12345",
+  password: "mac1",
   port: 5432,
 });
 
@@ -259,6 +290,59 @@ const addToNeo4j = async ({ id, first, last, description, email }) => {
 };
 
 let loginUserID; // Global variable to store logged-in user ID
+// =====================================================================
+// Getting the id 
+// =====================================================================
+
+app.get('/me', (req, res) => {
+  const loggedInUserId = loginUserID; 
+  res.json({ userId: loggedInUserId });
+});
+
+// =====================================================================
+// MESSAGES Refresh
+// =====================================================================
+
+
+app.get("/messages/:otherUserID", async (req, res) => {
+  const session54 = driver.session();
+ 
+  const otherUserID = parseInt(req.params.otherUserID);
+
+  console.log("otherUserID======== ",otherUserID);
+  console.log("loginUserID========= " ,loginUserID);
+  if (!loginUserID) {
+    return res.status(401).send("Unauthorized: No session found.");
+  }
+
+  try {
+    const result = await session54.run(
+      `
+     MATCH (sender:User)-[m:MESSAGE]->(receiver:User)
+WHERE (sender.id = $loginUserID AND receiver.id = $otherUserID)
+   OR (sender.id = $otherUserID AND receiver.id = $loginUserID)
+RETURN m.text AS text, m.timestamp AS timestamp, sender.id AS sender
+ORDER BY timestamp`,
+      { loginUserID: loginUserID, otherUserID: otherUserID }
+    );
+    console.log("MESSAGES========= " ,result);
+    const messages = result.records.map(record => ({
+      text: record.get("text"),
+      timestamp: record.get("timestamp"),
+      sender: record.get("sender")
+    }));
+    console.log("server messages :   ",messages);
+    res.json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).send("Server error");
+  } finally {
+    await session54.close();
+  }
+});
+
+
+
 
 // =====================================================================
 // ORIGINAL ENDPOINTS (Modified as needed)
@@ -306,6 +390,8 @@ app.post('/check-credentials', async (req, res) => {
   const { email, password } = req.body;
   const valid = await checkUserCredentials(email, password);
   if (valid) {
+    
+    
     res.status(200).json({ message: 'User credentials are valid' });
   } else {
     res.status(401).json({ message: 'Invalid credentials' });
@@ -333,6 +419,7 @@ app.post('/signup', async (req, res) => {
   try {
     await addUser(first, last, password, description, email, role, category);
     res.status(201).json({ message: "User added successfully" });
+    
   } catch (err) {
     res.status(500).json({ message: "Error adding user", error: err.message });
   }
@@ -357,7 +444,12 @@ app.get('/login', async (req, res) => {
     // WARNING: For production, use password hashing instead of plain text.
     if (user.password === password) {
       // ✅ Return the full user object
-      return res.status(200).json(user);
+      req.session.userID = user.id;
+      loginUserID = user.id;
+      req.session.userID =user.id;
+      console.log("Here is the id",req.session.userID);
+      console.log("Info at login: ",req.session);
+      return res.status(200).json({ message: "Login successful", user_id: user.id });
     } else {
       return res.status(401).json({ message: "Incorrect password" });
     }
@@ -366,6 +458,21 @@ app.get('/login', async (req, res) => {
     return res.status(500).json({ message: "Error during login", error: err.message });
   }
 });
+
+// =====================================================================
+// Check if user is active 
+// =====================================================================
+
+app.post('/check-session', (req, res) => {
+  if (req.session.userID) {
+    res.status(200).json({ message: 'User is logged in', userID: req.session.userID });
+  } else {
+    res.status(401).json({ message: 'No active session' });
+  }
+});
+// =====================================================================
+// Check if user is active 
+// =====================================================================
 
 
 // =====================================================================
@@ -376,19 +483,21 @@ app.get('/login', async (req, res) => {
 
 app.get("/returnUsers", async (req, res) => {
   const session3 = driver.session();
-  console.log("Is this good ", loginUserID);
+  console.log("Return users session:", req.session);
+  console.log("Return users id:  ", req.session.userID);
+  console.log("Login user id:  ", loginUserID );
+  console.log("Return users session:", req.session);
+  console.log("Return users id:  ", req.session.userID);
   try {
 
     const result = await session3.run(
       `MATCH (u:User)
        WHERE u.id <> $loginUserID
          AND NOT EXISTS {
-           MATCH (u)-[:SOME_RELATIONSHIP]-(otherUser:User {id: $loginUserID})
-         }AND NOT EXISTS {
        MATCH (u)-[:FRIEND]-(otherUser:User {id: $loginUserID})
      }AND NOT EXISTS {
        MATCH (u)-[:REQUEST]->(otherUser:User {id: $loginUserID})
-     }
+    }
        RETURN u.first AS firstName, u.last AS lastName, u.id AS id
       `, { loginUserID }
     ); 
@@ -507,6 +616,64 @@ app.get("/friends", async (req, res) => {
   }
 });
 
+// =====================================================================
+// API endpoints for the Executive Admin: BEGIN
+// =====================================================================
+
+// Get all users
+app.get('/users', async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Failed to fetch users:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// Delete a user
+app.delete('/users/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    await db.query('DELETE FROM users WHERE id = $1', [id]);
+    res.json({ message: "User deleted" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+// Update a user
+app.put('/users/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { first, last, email, password, role, category } = req.body;
+  try {
+    await db.query(
+      `UPDATE users SET first = $1, last = $2, email = $3, password = $4, role = $5, category = $6 WHERE id = $7`,
+      [first, last, email, password, role, category, id]
+    );
+    res.json({ message: "User updated" });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+// Optional: POST endpoint for admins to add users
+app.post('/add-user-admin', async (req, res) => {
+  const { first, last, email, password, role, category, description } = req.body;
+  try {
+    await addUser(first, last, password, description, email, role, category);
+    res.status(201).json({ message: "User added" });
+  } catch (err) {
+    console.error("Admin add error:", err);
+    res.status(500).json({ message: "Failed to add user", error: err.message });
+  }
+});
+// =====================================================================
+// API endpoints for the Executive Admin: END 
+// =====================================================================
+
 
 // =====================================================================
 // Routes using controllers
@@ -530,11 +697,11 @@ server.listen(PORT, () => {
 });
 
 // Create test user on startup
-const first = "Lilian";
-const last = "Thuram";
+const first = "Balotelli";
+const last = "Another";
 const password = "1";
-const description = "New1";
-const email = "merced5555533555Test@example.com";
+const description = "Italy";
+const email = "8888@example.com";
 const preference = "";
 
 (async () => {
@@ -546,6 +713,50 @@ const preference = "";
     console.error("Test user insertion error (likely duplicate):", err.message);
   }
 })();
+
+// Create test admin users on startup
+(async () => {
+  await createUserTable();
+  await createStreamsTable();
+
+  const predefinedAdmins = [
+    {
+      first: "Tech",
+      last: "Admin",
+      password: "admin123",
+      description: "System maintainer",
+      email: "techadmin@example.com",
+      role: "administrator",
+      category: "Technical personnel",
+    },
+    {
+      first: "Exec",
+      last: "Admin",
+      password: "admin123",
+      description: "Executive manager",
+      email: "execadmin@example.com",
+      role: "administrator",
+      category: "Executive personnel",
+    }
+  ];
+
+  for (const admin of predefinedAdmins) {
+    try {
+      await addUser(
+        admin.first,
+        admin.last,
+        admin.password,
+        admin.description,
+        admin.email,
+        admin.role,
+        admin.category
+      );
+    } catch (err) {
+      console.error(`Admin insertion error (${admin.email}):`, err.message);
+    }
+  }
+})();
+
 
 // Export for optional reuse
 module.exports = { db, checkUserCredentials };
