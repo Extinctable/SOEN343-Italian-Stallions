@@ -296,13 +296,11 @@ app.get("/messages/:otherUserID", async (req, res) => {
   try {
     const result = await session54.run(
       `
-      MATCH (u1:User {id: $loginUserID})-[m:MESSAGE]->(u2:User {id: $otherUserID})
-RETURN m.text AS text, m.timestamp AS timestamp, u1.id AS sender
-UNION
-MATCH (u2:User {id: $otherUserID})-[m:MESSAGE]->(u1:User {id: $loginUserID})
-RETURN m.text AS text, m.timestamp AS timestamp, u2.id AS sender
-ORDER BY timestamp
-      `,
+     MATCH (sender:User)-[m:MESSAGE]->(receiver:User)
+WHERE (sender.id = $loginUserID AND receiver.id = $otherUserID)
+   OR (sender.id = $otherUserID AND receiver.id = $loginUserID)
+RETURN m.text AS text, m.timestamp AS timestamp, sender.id AS sender
+ORDER BY timestamp`,
       { loginUserID: loginUserID, otherUserID: otherUserID }
     );
     console.log("MESSAGES========= " ,result);
