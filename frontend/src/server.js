@@ -223,11 +223,33 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("viewer-ready");
   });
 
+  socket.on("start-qa", () => {
+    socket.broadcast.emit("start-qa"); // notify all viewers
+  });
+
+  // When viewer asks a question
+  socket.on("question", ({ username, message }) => {
+    io.emit("new-question", { username, message }); // send to everyone or only streamer if needed
+  });
   socket.on("stream-offer", (offer) => {
     console.log("📤 Stream offer received, broadcasting to viewers...");
     socket.broadcast.emit("stream-offer", offer);
   });
 
+  io.on("connection", (socket) => {
+    socket.on("start-poll", (pollData) => {
+      console.log("🗳️ Poll started:", pollData);
+      socket.broadcast.emit("start-poll", pollData); // send to viewers
+    });
+  
+    socket.on("vote", ({ username, option }) => {
+      console.log(`🗳️ ${username} voted for: ${option}`);
+      // Send vote to streamer
+      io.emit("new-vote", { option }); // everyone can get vote update, or you can use socket.to(streamerId).emit(...)
+    });
+    
+  });
+  
   socket.on("stream-answer", (answer) => {
     console.log("📥 Answer received, sending to streamer...");
     socket.broadcast.emit("stream-answer", answer);
@@ -265,7 +287,7 @@ socket.on("audio_chunk", async (base64Audio) => {
 
     const response = await axios.post("https://api.openai.com/v1/audio/transcriptions", formData, {
       headers: {
-        // Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+       // Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         ...formData.getHeaders(),
       },
     });
@@ -926,6 +948,7 @@ app.post('/recommend-stream', streamController.recommendStream);
 app.post('/FinancialManager',userPaymentController.addUserPayment)
 app.post('/EventManager',eventController.addEvent);
 app.get('/EventManager', eventController.getEvents);
+app.post("/start-stream", streamController.startStream);
 
 // =====================================================================
 // SERVER INITIALIZATION (using server.listen so Socket.IO works)

@@ -344,3 +344,18 @@
   margin-top: 3rem;
   margin-left: 50%;
 }
+.start-stream-btn {
+  background-color: #10b981; /* green */
+  color: white;
+  margin-top: 0.5rem;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.start-stream-btn:hover {
+  background-color: #059669; /* darker green */
+}

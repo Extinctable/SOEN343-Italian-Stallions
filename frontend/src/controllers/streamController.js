@@ -44,6 +44,32 @@ const getStreams = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch streams" });
   }
 };
+const startStream = async (req, res) => {
+  const { streamId } = req.body;
+
+  if (!streamId) {
+    return res.status(400).json({ error: "Missing streamId" });
+  }
+
+  try {
+    const updateQuery = `
+      UPDATE streams
+      SET status = 'live'
+      WHERE id = $1
+      RETURNING *;
+    `;
+    const result = await db.query(updateQuery, [streamId]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Stream not found" });
+    }
+
+    res.json({ message: "Stream started successfully", stream: result.rows[0] });
+  } catch (err) {
+    console.error("Error starting stream:", err);
+    res.status(500).json({ error: "Failed to start stream" });
+  }
+};
 
 const recommendStream = async (req, res) => {
   const { preference, upcomingStreams } = req.body;
@@ -103,5 +129,6 @@ module.exports = {
   injectDB,
   createStream,
   getStreams,
-  recommendStream
+  recommendStream,
+  startStream
 };
