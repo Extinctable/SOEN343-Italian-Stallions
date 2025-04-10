@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./SignUp.css";
-import backgroundImage from "../Assets/stallion-logo-darkmode.png";
+import backgroundImage from "../Assets/stallion-logo.webp";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
