@@ -22,7 +22,7 @@ import Notifications from './Components/Notifications/Notifications';
 import Streamer from "./Components/Streamer"; 
 import Viewer from "./Components/Viewer";
 
-import AdminTechnicalDashboard from "./Components/Dashboards/AdminTechnicalDashboard";
+import AdminTechnicalDashboard from "./Components/Dashboards/AdminTechnical/AdminTechnicalDashboard";
 
 import { UserProvider } from "./context/UserContext"; 
 

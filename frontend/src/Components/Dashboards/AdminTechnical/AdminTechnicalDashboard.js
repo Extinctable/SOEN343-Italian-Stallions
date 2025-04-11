@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import './AdminTechnicalDashboard.css'
 
 function AdminTechnicalDashboard() {
   const [users, setUsers] = useState([]);
