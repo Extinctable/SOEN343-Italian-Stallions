@@ -11,6 +11,10 @@ const cors = require("cors");
 const neo4j = require('neo4j-driver');
 const userController = require('./controllers/userController'); // changed here
 const streamController = require('./controllers/streamController');
+const eventController = require('./controllers/eventController');
+const userEventController = require('./controllers/userEventController');
+const userPaymentController = require('./controllers/userPaymentController');
+const notificationController = require('./controllers/notificationController');
 const { Server } = require("socket.io");
 const http = require("http");
 const axios = require("axios");         // (NEW) for openAI HTTP calls
@@ -59,8 +63,8 @@ app.use(sessiontracking({
 const db = new Pool({
   user: "postgres",
   host: "localhost",
-  database: "Soen343",
-  password: "Extinctable4*",
+  database: "Project343DB",
+  password: "postgres123",
   port: 5432,
 });
 
@@ -72,6 +76,10 @@ db.connect()
 // Inject db into controllers
 userController.injectDB(db); 
 streamController.injectDB(db);
+eventController.injectDB(db);
+userEventController.injectDB(db);
+userPaymentController.injectDB(db);
+notificationController.injectDB(db);
 
 // =====================================================================
 // CREATE TABLES
@@ -111,6 +119,75 @@ const createStreamsTable = async () => {
   await db.query(createTableQuery);
   console.log("Streams table created successfully.");
 };
+
+const createEventsTable = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS events (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(150) NOT NULL,
+      description TEXT,
+      event_date TIMESTAMP NOT NULL,
+      status VARCHAR(50) DEFAULT 'Upcoming',
+      price NUMERIC(10,2) DEFAULT 0,
+      organizer_id INTEGER,
+      location VARCHAR(100) DEFAULT 'Concordia University'
+    );
+  `;
+  await db.query(createTableQuery);
+  console.log("Events table created successfully.");
+};
+
+const createUserEventsTable = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS user_events (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      event_id INTEGER NOT NULL,
+      registration_date TIMESTAMP DEFAULT NOW(),
+      status VARCHAR(50) DEFAULT 'Registered',
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+  `;
+  await db.query(createTableQuery);
+  console.log("UserEvents table created successfully.");
+};
+
+const createUserPaymentsTable = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS user_payments (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      event_id INTEGER NOT NULL,
+      payment_method VARCHAR(50),
+      amount NUMERIC(10,2),
+      payment_date TIMESTAMP DEFAULT NOW(),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+    );
+  `;
+  await db.query(createTableQuery);
+  console.log("UserPayments table created successfully.");
+};
+
+const createNotificationsTable = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      event_id INTEGER,
+      message TEXT,
+      is_read BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW(),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL
+    );
+  `;
+  await db.query(createTableQuery);
+  console.log("Notifications table created successfully.");
+};
+
 
 // =====================================================================
 // NEO4J SETUP
@@ -676,6 +753,190 @@ app.post('/add-user-admin', async (req, res) => {
 
 
 // =====================================================================
+// Event Endpoints (using eventController)
+// =====================================================================
+
+// Get events, optionally filtered by organizer_id.
+app.get('/api/events', async (req, res) => {
+  const { organizer_id } = req.query;
+  try {
+    let query = 'SELECT * FROM events';
+    let params = [];
+    if (organizer_id) {
+      query += ' WHERE organizer_id = $1';
+      params.push(organizer_id);
+    }
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching events:", err);
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
+// Add an event.
+app.post('/api/events', async (req, res) => {
+  await eventController.addEvent(req, res);
+});
+
+// Update an event.
+app.put('/api/events/:id', async (req, res) => {
+  await eventController.updateEvent(req, res);
+});
+
+// Delete an event.
+app.delete('/api/events/:id', async (req, res) => {
+  await eventController.deleteEvent(req, res);
+});
+
+// Return user_events joined with events for the fields we need:
+app.get('/api/userEvents', async (req, res) => {
+  const { event_id, user_id } = req.query;
+  try {
+    // We'll build a WHERE clause if event_id or user_id is provided
+    let query = `
+      SELECT 
+        ue.id AS registration_id,
+        ue.status,
+        ue.user_id,
+        ue.event_id,
+        ue.registration_date,
+        e.title,
+        e.event_date,
+        e.price,
+        e.description,
+        e.location
+      FROM user_events ue
+      INNER JOIN events e ON ue.event_id = e.id
+    `;
+
+    const conditions = [];
+    const params = [];
+
+    if (event_id) {
+      params.push(event_id);
+      conditions.push(` ue.event_id = $${params.length} `);
+    }
+    if (user_id) {
+      params.push(user_id);
+      conditions.push(` ue.user_id = $${params.length} `);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(` AND `);
+    }
+
+    query += ` ORDER BY ue.registration_date DESC;`;
+
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching user events:", err);
+    res.status(500).json({ error: "Failed to fetch user events" });
+  }
+});
+
+
+app.put('/api/userEvents/:registration_id', async (req, res) => {
+  const { registration_id } = req.params;
+  const { status } = req.body;
+  try {
+    const result = await db.query(
+      "UPDATE user_events SET status = $1 WHERE id = $2 RETURNING *;",
+      [status, registration_id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error updating registration status:", err);
+    res.status(500).json({ error: "Failed to update registration status" });
+  }
+});
+
+
+app.post('/api/userEvents', async (req, res) => {
+  await userEventController.addUserEvent(req, res);
+});
+
+app.delete('/api/userEvents/:id', async (req, res) => {
+  await userEventController.deleteUserEvent(req, res);
+});
+
+// =====================================================================
+// Payment Endpoints (using userPaymentController)
+// =====================================================================
+
+app.get('/api/payments', async (req, res) => {
+  const { user_id } = req.query;
+  try {
+    const query = `
+      SELECT up.*, e.title AS eventTitle
+      FROM user_payments up
+      LEFT JOIN events e ON up.event_id = e.id
+      WHERE up.user_id = $1
+      ORDER BY up.payment_date DESC;
+    `;
+    const result = await db.query(query, [user_id]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching payments:", err);
+    res.status(500).json({ error: "Failed to fetch payments" });
+  }
+});
+
+
+app.get('/api/eventPayments', async (req, res) => {
+  const { organizer_id } = req.query;
+  try {
+    const query = `
+      SELECT up.*, e.title AS eventTitle
+      FROM user_payments up
+      INNER JOIN events e ON up.event_id = e.id
+      WHERE e.organizer_id = $1
+      ORDER BY up.payment_date DESC;
+    `;
+    const result = await db.query(query, [organizer_id]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching event payments:", err);
+    res.status(500).json({ error: "Failed to fetch event payments" });
+  }
+});
+
+app.post('/api/payments', async (req, res) => {
+  await userPaymentController.addUserPayment(req, res);
+});
+
+
+
+// =====================================================================
+// Notifications Endpoints
+// =====================================================================
+
+// Get notifications for a given user (e.g., notifications for updated events)
+app.get('/api/notifications', async (req, res) => {
+  await notificationController.getNotifications(req, res);
+});
+
+// Mark a notification as read (pass notification id as URL parameter)
+app.put('/api/notifications/:notification_id', async (req, res) => {
+  await notificationController.markAsRead(req, res);
+});
+
+// Add endpoint to create a notification.
+app.post('/api/notifications', async (req, res) => {
+  try {
+    const notification = await notificationController.addNotification(req.body);
+    res.status(201).json(notification);
+  } catch (err) {
+    console.error("Error creating notification:", err);
+    res.status(500).json({ error: "Failed to create notification" });
+  }
+});
+
+
+
+
+// =====================================================================
 // Routes using controllers
 // =====================================================================
 
@@ -684,6 +945,9 @@ app.post('/set-preference', userController.setPreference);
 app.post('/create-stream', streamController.createStream);
 app.get('/streams', streamController.getStreams);
 app.post('/recommend-stream', streamController.recommendStream);
+app.post('/FinancialManager',userPaymentController.addUserPayment)
+app.post('/EventManager',eventController.addEvent);
+app.get('/EventManager', eventController.getEvents);
 app.post("/start-stream", streamController.startStream);
 
 // =====================================================================
@@ -707,6 +971,10 @@ const preference = "";
 (async () => {
   await createUserTable();
   await createStreamsTable();
+  await createEventsTable();
+  await createUserEventsTable();
+  await createUserPaymentsTable();
+  await createNotificationsTable();
   try {
     await addUser(first, last, password, description, email, "organizer", "Event organizers");
   } catch (err) {

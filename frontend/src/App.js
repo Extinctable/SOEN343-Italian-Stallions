@@ -14,6 +14,11 @@ import Message from "./Components/Message/Message";
 import Network from "./Components/Network/Network";
 import HomePage from "./Components/HomePage/HomePage.jsx";
 import AccountSettings from "./Components/AccountSettings/AccountSettings";
+import FinancialManager from "./Components/Finance/FinancialManager.jsx";
+import EventManager from "./Components/Events/EventManager.jsx";
+import Notifications from './Components/Notifications/Notifications';
+
+
 import Streamer from "./Components/Streamer"; 
 import Viewer from "./Components/Viewer";
 
@@ -69,8 +74,12 @@ function MainLayout() {
             <Route path="/Account" element={<AccountSettings />} />
             <Route path="/network" element={<Network />} />
             <Route path="/message" element={<Message />} />
+            <Route path="/FinancialManager" element={<FinancialManager />} />
+            <Route path="/EventManager" element={<EventManager />} />
             <Route path="/streamer" element={<Streamer />} />
             <Route path="/viewer" element={<Viewer />} />
+            <Route path="/notifications" element={<Notifications />} />
+
 
             {/* 🛡️ Admin Dashboards */}
             <Route
