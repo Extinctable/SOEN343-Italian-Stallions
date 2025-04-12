@@ -1,0 +1,73 @@
+/* UserAnalytics.css */
+
+.analytics-container {
+    padding: 2rem;
+    max-width: 80%;
+    margin: 0 auto;
+    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .analytics-container h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #2a2a2a;
+  }
+  
+  .chart-section {
+    margin-bottom: 2.5rem;
+    padding: 1rem;
+    background-color: #f7f9fb;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .chart-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    color: #444;
+    text-align: center;
+  }
+  
+  .chart-section canvas {
+    max-height: 250px !important;
+  }
+  
+  .chart-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .chart-half {
+    flex: 1 1 45%;
+    background-color: #f7f9fb;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .chart-half h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .chart-half canvas {
+    max-height: 220px !important;
+  }
+  
+  @media (max-width: 768px) {
+    .chart-half {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
+  }
+  

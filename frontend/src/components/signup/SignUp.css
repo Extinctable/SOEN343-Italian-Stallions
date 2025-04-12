@@ -1,0 +1,265 @@
+/* Main container styling */
+.container {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    margin: auto;
+    height: 100vh;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    background-color: white;
+    margin-top: 5h;
+    /* Debug: Increased container width and max-width */
+    width: 80%; /* Was 55% */
+    max-width: 1400px; /* Was 1200px */
+    /* Debug: Increased container minimum height to accommodate additional sign-up elements */
+    min-height: 800px; /* Was 600px */
+  }
+  
+  /* Title styling within container */
+  .container h1 {
+    color: #912338;
+    margin: 20px 0 45px;
+    text-align: center;
+  }
+  
+  /* Role selection buttons container */
+  .button-role {
+    position: absolute;
+    top: 20%;
+    right: 58%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Individual role button styling */
+  .button {
+    display: block;
+    margin: 10px 0;
+    padding: 30px 40px;
+    border: none;
+    border-radius: 20px;
+    background-color: transparent;
+    color: #912338;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: bold;
+    transition: background-color 0.2s ease, color 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+    align-self: flex-end;
+  }
+  
+  /* Active state for role button */
+  .button.active {
+    background-color: white;
+    color: #912338;
+  }
+  
+  /* Background image styling */
+  .image {
+    width: 40%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px 0 0 20px;
+    opacity: 1;
+    filter: blur(2px);
+  }
+  
+  /* Information container styling (holds forms, etc.) */
+  .info {
+    width: 60%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 0;
+    max-height: 90%;
+    flex-grow: 1;
+  }
+  
+  /* Textfield styling within the info section */
+  .info .textfield,
+  .textfield {
+    width: 100%;
+    max-width: 400px;
+    padding: 5px;
+    box-sizing: border-box;
+    line-height: normal;
+    margin-bottom: 20px;
+  }
+  
+  /* Button styling for Sign Up / Login form */
+  .info .button-signup {
+    width: 100%;
+    max-width: 600px;
+    min-width: 300px;
+    padding: 10px 20px;
+    background-color: #912338;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Hover state for Sign Up / Login button */
+  .info .button-signup:hover {
+    background-color: #f1aeb5;
+    color: white;
+  }
+  
+  /* Application title (if needed) */
+  .peer-title {
+    position: absolute;
+    top: 5%;
+    right: 62%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+  }
+  
+  /* Error message styling */
+  .error {
+    color: red;
+    font-size: 0.9em;
+    margin-top: 5px;
+    width: 300px;
+  }
+  
+  /* Modal container styling */
+  .container-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  /* Modal content styling */
+  .modal-PSW-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1010;
+  }
+  
+  /* Submit button for password reset modal */
+  .submitPSW {
+    margin: 10px 5px 0;
+    padding: 10px 20px;
+    border: none;
+    background-color: #1860c3;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  /* Hover state for password reset submit button */
+  .submitPSW:hover {
+    background-color: #145a9d;
+  }
+  
+  /* Close button for the password reset modal */
+  .closePSW {
+    margin: 10px 5px 0;
+    padding: 10px 20px;
+    border: none;
+    background-color: #912338;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .closePSW:hover {
+    background-color: #f1aeb5;
+  }
+  
+  /* Optional styling for form prompts and links */
+  .signup-prompt,
+  .password-link {
+    font-size: 0.9em;
+    color: #1860c3;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  /* Responsive styling for mobile devices */
+  @media only screen and (max-width: 900px) {
+    .container {
+      width: auto;
+      margin: auto;
+      height: 60vh;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 20px;
+      background-color: white;
+      margin-top: 10vh; /* Adjusted for mobile */
+      max-width: 400px;
+    }
+  
+    .image {
+      display: none;
+    }
+  
+    .button {
+      margin: 2px 0;
+      padding: 35px 30px;
+      color: #912338;
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+      width: auto;
+      max-width: none;
+      align-self: auto;
+    }
+  
+    .button-role {
+      top: auto;
+      right: auto;
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+    }
+  
+    .button.active {
+      background-color: #f1aeb5;
+      color: white;
+      padding: 20px;
+    }
+  
+    .info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+  
+    .container h1 {
+      margin: 5px 0 5px;
+    }
+  
+    .peer-title {
+      display: none;
+    }
+  }
+  

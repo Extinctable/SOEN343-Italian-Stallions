@@ -1,0 +1,149 @@
+/* General Container */
+.network-container {
+    background-color: #f0f4f8;
+    width: 80%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Title */
+  .network-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* Search Bar */
+  .network-search {
+    width: 100%;
+    padding: 12px 20px;
+    margin-bottom: 30px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+  
+  .network-search:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
+  }
+  
+  /* User List */
+  .network-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .network-item {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+  }
+  
+  .network-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Username */
+  .network-username {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin-right: 20px;
+    flex-grow: 1;
+  }
+  
+  /* Buttons */
+  .network-button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  
+  .network-button.add {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .network-button.add:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+  }
+  
+  .network-button.accept {
+    background-color: #2196F3;
+    color: white;
+  }
+  
+  .network-button.accept:hover {
+    background-color: #1e88e5;
+    transform: translateY(-2px);
+  }
+  
+  /* Friend Label */
+  .network-friend-label {
+    font-size: 14px;
+    color: #4CAF50;
+    font-weight: 600;
+    background-color: #e8f5e9;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-left: 15px;
+    text-align: center;
+  }
+  
+  /* Responsive Layout */
+  @media (max-width: 768px) {
+    .network-container {
+      width: 95%;
+      padding: 20px;
+    }
+  
+    .network-title {
+      font-size: 24px;
+    }
+  
+    .network-search {
+      font-size: 14px;
+      padding: 10px 15px;
+    }
+  
+    .network-item {
+      padding: 12px 20px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .network-username {
+      margin-bottom: 10px;
+    }
+  
+    .network-button {
+      width: 100%;
+      margin-top: 10px;
+    }
+  
+    .network-friend-label {
+      margin-top: 10px;
+    }
+  }

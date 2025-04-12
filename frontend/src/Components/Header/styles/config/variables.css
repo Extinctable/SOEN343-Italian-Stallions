@@ -1,0 +1,27 @@
+:root {
+  /* Spacing variables */
+  --spacer-xs: 4px;
+  --spacer-s: 8px;
+  --spacer-m: 16px;
+  --spacer-l: 24px;
+  --spacer-xl: 32px;
+
+  /* Grid breakpoints */
+  --grid-medium: 750px;
+  --grid-large: 990px;
+  --grid-widescreen: 1400px;
+
+  /* Breakpoints */
+  --small: "(max-width: 749px)";
+  --medium: "(min-width: 750px) and (max-width: 989px)";
+  --medium-down: "(max-width: 989px)";
+  --medium-up: "(min-width: 750px)";
+  --large: "(min-width: 990px) and (max-width: 1399px)";
+  --large-down: "(max-width: 1399px)";
+  --large-up: "(min-width: 990px)";
+  --widescreen: "(min-width: 1400px)";
+
+  /* Min & max width */
+  --min-width: 375px;
+  --max-width: 1400px;
+}

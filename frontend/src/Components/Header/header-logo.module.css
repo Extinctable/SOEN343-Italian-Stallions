@@ -1,0 +1,15 @@
+
+.logo {
+      grid-column: 1/2;
+      align-self: center;
+      margin-top: -200px;
+
+      .svg {
+          height: 42px;
+          width: auto;
+      }
+}
+
+
+
+
