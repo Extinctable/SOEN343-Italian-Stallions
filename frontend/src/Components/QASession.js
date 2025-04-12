@@ -1,6 +1,6 @@
-const NetworkingActivity = require("./NetworkingActivity");
+const StreamingActivity = require("./StreamingActivity");
 
-class QASession extends NetworkingActivity {
+class QASession extends StreamingActivity {
   // Optional constructor if you want fields like ID, title, etc.
   // constructor(id, title) {
   //   super();

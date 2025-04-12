@@ -1,6 +1,6 @@
-const NetworkingActivity = require("./NetworkingActivity");
+const StreamingActivity = require("./StreamingActivity");
 
-class LivePolling extends NetworkingActivity {
+class LivePolling extends StreamingActivity {
   setup(io, socket) {
     // 1. Start a poll
     socket.on("start-poll", (pollData) => {

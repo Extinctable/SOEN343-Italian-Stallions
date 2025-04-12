@@ -2,7 +2,7 @@
 const QASession = require("./QASession");
 const LivePolling = require("./LivePolling");
 
-class NetworkActivityFactory {
+class StreamingActivityFactory {
   static createActivity(activityType) {
     switch (activityType) {
       case "qa":
@@ -15,4 +15,4 @@ class NetworkActivityFactory {
   }
 }
 
-module.exports = NetworkActivityFactory;
+module.exports = StreamingActivityFactory;
