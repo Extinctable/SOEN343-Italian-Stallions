@@ -1,15 +1,32 @@
+// /src/Notifications.js
 import React, { useState, useEffect } from "react";
 import "./Notifications.css";
 
-const Notifications = () => {
-  // Dummy user role and id for demonstration.
-  // For an attendee, use userId 2 (for example) and for an organizer, userId 1.
-  const userRole = "attendee"; // Change to "organizer" to test that role's view.
-  const userId = userRole === "attendee" ? 2 : 1;
+// Observer Subject implementation
+export class NotificationSubject {
+  constructor() {
+    this.observers = [];
+  }
+  subscribe(observer) {
+    this.observers.push(observer);
+  }
+  unsubscribe(observer) {
+    this.observers = this.observers.filter(obs => obs !== observer);
+  }
+  notify(data) {
+    this.observers.forEach(observer => observer(data));
+  }
+}
 
+// Create and export a singleton subject instance.
+export const notificationSubject = new NotificationSubject();
+
+const Notifications = () => {
+  // (Your existing notifications component code)
+  const userRole = "attendee"; // or "organizer"
+  const userId = userRole === "attendee" ? 2 : 1;
   const [notifications, setNotifications] = useState([]);
 
-  // Fetch notifications from the backend.
   const fetchNotifications = async () => {
     try {
       const response = await fetch(`http://localhost:5002/api/notifications?user_id=${userId}`);
@@ -30,9 +47,7 @@ const Notifications = () => {
 
   return (
     <div className="notifications-container">
-      <h2>
-        {userRole === "organizer" ? "Attendee Registrations" : "Event Updates"}
-      </h2>
+      <h2>{userRole === "organizer" ? "Attendee Registrations" : "Event Updates"}</h2>
       {notifications.length === 0 ? (
         <p className="no-notifications">No notifications available.</p>
       ) : (
