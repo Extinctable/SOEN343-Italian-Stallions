@@ -1,194 +1,133 @@
 import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import "./Viewer.css";
-// Connect to signaling server (Node.js)
-const socket = io("http://localhost:5002", {
-  transports: ["websocket"],
-});
+import StreamingActivityFactory from "../utils/StreamingActivityFactory";   
+
+const socket = io("http://localhost:5002", { transports: ["websocket"] });
 
 const Viewer = () => {
-  const videoRef = useRef(null);
+  const videoRef          = useRef(null);
   const peerConnectionRef = useRef(null);
-  const [subtitle, setSubtitle] = useState("");
-  const [qaActive, setQaActive] = useState(false);
-const [question, setQuestion] = useState("");
-const [username, setUsername] = useState("viewer 1"); // Replace this with real user info if you have auth
-const [pollData, setPollData] = useState(null); // poll question + options
-const [selectedOption, setSelectedOption] = useState("");
 
+  // ────────── UI state ──────────
+  const [subtitle,       setSubtitle]       = useState("");
+  const [qaActive,       setQaActive]       = useState(false);
+  const [question,       setQuestion]       = useState("");
+  const [username]                         = useState("viewer 1"); // stub
+  const [pollData,       setPollData]       = useState(null);
+  const [selectedOption, setSelectedOption] = useState("");
 
+  // activity refs
+  const qaActivityRef   = useRef(null);
+  const pollActivityRef = useRef(null);
 
+  /* ---------- main effect ---------- */
   useEffect(() => {
-    const setupViewer = async () => {
-      console.log("👀 Setting up viewer...");
+    /* 1️⃣ Activities */
+    qaActivityRef.current = StreamingActivityFactory.create("qa", socket, {
+      onStartQA: () => setQaActive(true),
+    });
 
-      const peerConnection = new RTCPeerConnection();
-      peerConnectionRef.current = peerConnection;
-
-      // When streamer tracks arrive, put them in the video
-      peerConnection.ontrack = (event) => {
-        console.log("🎬 Received media stream:", event.streams);
-        videoRef.current.srcObject = event.streams[0];
-      };
-
-      // Send ICE candidates to streamer
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log("📨 Sending ICE candidate to streamer");
-          socket.emit("stream-ice-candidate", event.candidate);
-        }
-      };
-
-      socket.on("start-poll", (data) => {
-        setPollData(data); // { question: '...', options: ['...', '...'] }
+    pollActivityRef.current = StreamingActivityFactory.create("poll", socket, {
+      onPollStart: data => {
+        setPollData(data);
         setSelectedOption("");
+      },
+    });
+
+    qaActivityRef.current.init();
+    pollActivityRef.current.init();
+
+    /* 2️⃣ WebRTC viewer setup */
+    (async () => {
+      const pc = new RTCPeerConnection();
+      peerConnectionRef.current = pc;
+
+      pc.ontrack = e => (videoRef.current.srcObject = e.streams[0]);
+      pc.onicecandidate = e => e.candidate && socket.emit("stream-ice-candidate", e.candidate);
+
+      socket.on("connect", () => socket.emit("viewer-ready"));
+      socket.on("stream-offer", async offer => {
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("stream-answer", answer);
       });
-      
+      socket.on("stream-ice-candidate", c => pc.addIceCandidate(new RTCIceCandidate(c)));
+      socket.on("subtitle", txt => setSubtitle(txt));
+    })();
 
-      // On connect => let streamer know viewer is ready
-      socket.on("connect", () => {
-        console.log("✅ Viewer connected to signaling server:", socket.id);
-        socket.emit("viewer-ready");
-      });
-
-      // On disconnect
-      socket.on("disconnect", () => {
-        console.warn("⚠️ Viewer disconnected from signaling server");
-      });
-
-      socket.on("start-qa", () => {
-        setQaActive(true);
-      });
-      
-
-      // On stream-offer => create and send answer
-      socket.on("stream-offer", async (offer) => {
-        console.log("📥 Received stream offer from streamer:", offer?.sdp);
-        try {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-          const answer = await peerConnection.createAnswer();
-          await peerConnection.setLocalDescription(answer);
-          console.log("📤 Sending answer back to streamer");
-          socket.emit("stream-answer", answer);
-        } catch (err) {
-          console.error("❌ Error during offer/answer exchange:", err);
-        }
-      });
-
-      // On ICE from streamer => add candidate
-      socket.on("stream-ice-candidate", async (candidate) => {
-        try {
-          console.log("📥 Received ICE candidate from streamer");
-          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (err) {
-          console.error("❌ Error adding ICE candidate:", err);
-        }
-      });
-
-      // 📝 Listen for subtitles from Node server
-      socket.on("subtitle", (data) => {
-        console.log("📝 Subtitle received:", data);
-        setSubtitle(data);
-      });
-    };
-
-    setupViewer();
-
-
+    /* cleanup */
     return () => {
-      if (peerConnectionRef.current) {
-        peerConnectionRef.current.close();
-        console.log("⚠️ Viewer connection closed.");
-      }
+      qaActivityRef.current.dispose();
+      pollActivityRef.current.dispose();
+      peerConnectionRef.current?.close();
     };
   }, []);
 
-  const handleVoteSubmit = (e) => {
+  /* ----------  interactions ---------- */
+  const handleVoteSubmit = e => {
     e.preventDefault();
     if (!selectedOption) return;
-  
-    socket.emit("vote", {
-      username,
-      option: selectedOption
-    });
-  
-    // optionally clear or disable poll
-    setPollData(null);
+    socket.emit("vote", { username, option: selectedOption });
+    setPollData(null); // hide poll after voting
   };
-  
-  const handleSubmit = (e) => {
+
+  const handleQuestionSubmit = e => {
     e.preventDefault();
     if (!question.trim()) return;
-  
-    socket.emit("question", {
-      username,
-      message: question
-    });
-  
-    setQuestion(""); // clear input
+    socket.emit("question", { username, message: question.trim() });
+    setQuestion("");
   };
+
+  /* ----------  render ---------- */
   return (
     <div>
       <h2>Watching Live Stream</h2>
       <video ref={videoRef} autoPlay controls style={{ width: "600px" }} />
 
       {subtitle && (
-        <div
-          style={{
-            backgroundColor: "black",
-            color: "white",
-            padding: "10px",
-            marginTop: "10px",
-            width: "600px",
-            textAlign: "center",
-            borderRadius: "8px"
-          }}
-        >
+        <div className="subtitle-box">
           {subtitle}
         </div>
       )}
 
-{qaActive && (
-  <div className="qa-container">
-    <h3 className="qa-title">💬 Q&A is Live – Ask your question</h3>
-    <form onSubmit={handleSubmit} className="qa-form">
-      <input
-        type="text"
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="Type your question..."
-        className="qa-input"
-      />
-      <button type="submit" className="qa-send-button">
-        Send
-      </button>
-    </form>
-  </div>
-)}
+      {qaActive && (
+        <div className="qa-container">
+          <h3 className="qa-title">💬 Q&A is Live – Ask your question</h3>
+          <form onSubmit={handleQuestionSubmit} className="qa-form">
+            <input
+              type="text"
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              placeholder="Type your question..."
+              className="qa-input"
+            />
+            <button type="submit" className="qa-send-button">Send</button>
+          </form>
+        </div>
+      )}
 
-{pollData && (
-  <div className="poll-container">
-    <h3 className="poll-title">📊 {pollData.question}</h3>
-    <form onSubmit={handleVoteSubmit} className="poll-form">
-      {pollData.options.map((opt, idx) => (
-        <label key={idx} className="poll-option">
-          <input
-            type="radio"
-            name="poll"
-            value={opt}
-            checked={selectedOption === opt}
-            onChange={(e) => setSelectedOption(e.target.value)}
-          />
-          {opt}
-        </label>
-      ))}
-      <button type="submit" className="poll-vote-button">
-        Vote
-      </button>
-    </form>
-  </div>
-)}
-
+      {pollData && (
+        <div className="poll-container">
+          <h3 className="poll-title">📊 {pollData.question}</h3>
+          <form onSubmit={handleVoteSubmit} className="poll-form">
+            {pollData.options.map(opt => (
+              <label key={opt} className="poll-option">
+                <input
+                  type="radio"
+                  name="poll"
+                  value={opt}
+                  checked={selectedOption === opt}
+                  onChange={e => setSelectedOption(e.target.value)}
+                />
+                {opt}
+              </label>
+            ))}
+            <button type="submit" className="poll-vote-button">Vote</button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
