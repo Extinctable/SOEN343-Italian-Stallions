@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './EventManager.css';
-import { generatePDFReport } from '../../utils/reportGenerator';
+import { generatePDFReport } from '../../utils/reports/reportDispatcher';
 import CreateEventForm from './CreateEventForm';
 import UpdateEventForm from './UpdateEventForm';
 import { notificationSubject } from "../Notifications/Notifications";
@@ -389,7 +389,9 @@ const EventManager = () => {
   const handleGenerateReport = () => {
     // Use the events list for organizer or registeredEvents for attendee.
     const reportData = userRole === "organizer" ? events : registeredEvents;
-    generatePDFReport(reportData, 'event');
+    const context = userRole === "organizer" ? "organizer_event" : "attendee_event";
+    generatePDFReport(reportData, context);
+    
   };
 
   return (
