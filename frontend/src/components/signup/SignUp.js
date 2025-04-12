@@ -154,7 +154,7 @@ const SignUp = () => {
       });
       if (response.status === 201) {
         console.log("Signup successful");
-        navigate("/teams");
+        navigate("/home");
       } else {
         console.error("Signup failed");
       }
@@ -184,7 +184,7 @@ const SignUp = () => {
         localStorage.setItem("user_role", role);
         localStorage.setItem("user_category", formData.category);
         console.log("Login Successful:", user);
-        navigate("/teams");
+        navigate("/home");
       } else {
         const data = await response.json();
         const errorMessage = data.message || "Login failed";

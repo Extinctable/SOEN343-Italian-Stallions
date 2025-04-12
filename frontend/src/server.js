@@ -23,6 +23,9 @@ const fs = require("fs");               // (NEW) for saving chunk
 const path = require("path");           // (NEW) path ops
 const { v4: uuidv4 } = require("uuid"); // (NEW) unique temp filenames
 const sessiontracking = require('express-session');
+
+const QASession = require("./Components/QASession");
+const LivePolling = require("./Components/LivePolling");
 // Enable CORS for all routes
 // app.use(cors());
 app.use(cors({
@@ -64,7 +67,7 @@ const db = new Pool({
   user: "postgres",
   host: "localhost",
   database: "Project343DB",
-  password: "postgres123",
+  password: "12345",
   port: 5432,
 });
 
@@ -216,117 +219,102 @@ const io = new Server(server, {
 // Step 3: Handle socket connections
 
 io.on("connection", (socket) => {
-  console.log("✅ A user connected:", socket.id);
+  console.log("A user connected:", socket.id);
 
+  //Setup modular handlers
+  const qaSession = new QASession();
+  qaSession.setup(io, socket);
+
+  const livePolling = new LivePolling();
+  livePolling.setup(io, socket);
+
+  // Viewer ready
   socket.on("viewer-ready", () => {
     console.log("👀 Viewer is ready, notifying streamer...");
     socket.broadcast.emit("viewer-ready");
   });
 
-  socket.on("start-qa", () => {
-    socket.broadcast.emit("start-qa"); // notify all viewers
-  });
-
-  // When viewer asks a question
-  socket.on("question", ({ username, message }) => {
-    io.emit("new-question", { username, message }); // send to everyone or only streamer if needed
-  });
+  // WebRTC signaling
   socket.on("stream-offer", (offer) => {
     console.log("📤 Stream offer received, broadcasting to viewers...");
     socket.broadcast.emit("stream-offer", offer);
   });
 
-  io.on("connection", (socket) => {
-    socket.on("start-poll", (pollData) => {
-      console.log("🗳️ Poll started:", pollData);
-      socket.broadcast.emit("start-poll", pollData); // send to viewers
-    });
-  
-    socket.on("vote", ({ username, option }) => {
-      console.log(`🗳️ ${username} voted for: ${option}`);
-      // Send vote to streamer
-      io.emit("new-vote", { option }); // everyone can get vote update, or you can use socket.to(streamerId).emit(...)
-    });
-    
-  });
-  
   socket.on("stream-answer", (answer) => {
     console.log("📥 Answer received, sending to streamer...");
     socket.broadcast.emit("stream-answer", answer);
   });
 
-// 🧊 ICE Candidate relaying
-socket.on("stream-ice-candidate", (candidate) => {
-  console.log("🧊 ICE candidate relayed");
-  socket.broadcast.emit("stream-ice-candidate", candidate);
-});
+  socket.on("stream-ice-candidate", (candidate) => {
+    console.log("🧊 ICE candidate relayed");
+    socket.broadcast.emit("stream-ice-candidate", candidate);
+  });
 
-// 📢 Subtitle relaying
-socket.on("subtitle", (text) => {
-  console.log("📢 Subtitle relayed to viewers:", text);
-  socket.broadcast.emit("subtitle", text);
-});
+  // Subtitle relaying
+  socket.on("subtitle", (text) => {
+    console.log("Subtitle relayed to viewers:", text);
+    socket.broadcast.emit("subtitle", text);
+  });
 
-/************************************************************
- * (NEW) The streamer can send raw audio chunks to be transcribed
- ************************************************************/
-socket.on("audio_chunk", async (base64Audio) => {
-  let tempFile;
-  try {
-    const audioBuffer = Buffer.from(base64Audio, "base64");
-    tempFile = path.join(__dirname, `temp_${uuidv4()}.webm`);
-    fs.writeFileSync(tempFile, audioBuffer);
+  //  Whisper transcription
+  socket.on("audio_chunk", async (base64Audio) => {
+    let tempFile;
+    try {
+      const audioBuffer = Buffer.from(base64Audio, "base64");
+      tempFile = path.join(__dirname, `temp_${uuidv4()}.webm`);
+      fs.writeFileSync(tempFile, audioBuffer);
 
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(tempFile), {
-      filename: "audio.webm",
-      contentType: "audio/webm"
-    });
-    formData.append("model", "whisper-1");
-    formData.append("language", "en");
+      const formData = new FormData();
+      formData.append("file", fs.createReadStream(tempFile), {
+        filename: "audio.webm",
+        contentType: "audio/webm",
+      });
+      formData.append("model", "whisper-1");
+      formData.append("language", "en");
 
-    const response = await axios.post("https://api.openai.com/v1/audio/transcriptions", formData, {
-      headers: {
-       // Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        ...formData.getHeaders(),
-      },
-    });
+      const response = await axios.post("https://api.openai.com/v1/audio/transcriptions", formData, {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          ...formData.getHeaders(),
+        },
+      });
 
-    const text = (response.data.text || "").trim();
-    console.log("📝 Transcribed text:", text);
-    if (text) {
-      socket.broadcast.emit("subtitle", text);
+      const text = (response.data.text || "").trim();
+      console.log(" Transcribed text:", text);
+      if (text) {
+        socket.broadcast.emit("subtitle", text);
+      }
+
+      fs.unlinkSync(tempFile);
+    } catch (err) {
+      console.error("Transcription error:", err.response?.data || err.message);
+      if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
     }
+  });
 
-    fs.unlinkSync(tempFile);
-  } catch (err) {
-    console.error("❌ Transcription error:", err.response?.data || err.message);
-    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
-  }
-});
+  // Messaging
+  socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
+    const sessionSocket = driver.session();
+    try {
+      await sessionSocket.run(
+        `MATCH (sender:User {id: $senderId}), (receiver:User {id: $receiverId})
+         CREATE (sender)-[:MESSAGE {text: $message, timestamp: datetime()}]->(receiver)`,
+        { senderId, receiverId, message }
+      );
+      io.to(receiverId).emit("receiveMessage", { senderId, message });
+    } catch (err) {
+      console.error("Error saving message:", err);
+    } finally {
+      await sessionSocket.close();
+    }
+  });
 
-// 💬 Messaging system with Neo4j
-socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
-  const sessionSocket = driver.session();
-  try {
-    await sessionSocket.run(
-      `MATCH (sender:User {id: $senderId}), (receiver:User {id: $receiverId})
-       CREATE (sender)-[:MESSAGE {text: $message, timestamp: datetime()}]->(receiver)`,
-      { senderId, receiverId, message }
-    );
-    io.to(receiverId).emit("receiveMessage", { senderId, message });
-  } catch (err) {
-    console.error("Error saving message:", err);
-  } finally {
-    await sessionSocket.close();
-  }
-});
-
-
+  // Disconnect
   socket.on("disconnect", () => {
-    console.log("❌ User disconnected:", socket.id);
+    console.log(" User disconnected:", socket.id);
   });
 });
+
 
 // =====================================================================
 // USER FUNCTIONS
