@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import "./NavBar.css";
+import darkLogo from './Assets/stallion-logo-darkmode.png';
+import lightLogo from './Assets/stallion-logo.webp';
+
 
 function NavBar() {
   const [isSidebarClosed, setIsSidebarClosed] = useState(true);
@@ -33,7 +36,7 @@ function NavBar() {
       <header>
         <div className="image-text">
           <span className="image">
-            <img src={darkMode ? "./Assets/stallion-logo-darkmode.png" : "./Assets/stallion-logo.webp"} alt="Stallion Logo" />
+            <img src={darkMode ? darkLogo : lightLogo} alt="Stallion Logo" />
           </span>
           <div className="text logo-text">
             <span className="name">StallionSpeaks</span>

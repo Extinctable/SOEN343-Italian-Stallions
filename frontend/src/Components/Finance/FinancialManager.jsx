@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './FinancialManager.css';
-import { generatePDFReport } from '../../utils/reportGenerator';
+import { generatePDFReport } from '../../utils/reports/reportDispatcher';
 
 // Payment Strategy Pattern Implementation
 class PaymentStrategy {
@@ -159,10 +159,10 @@ const FinancialManager = () => {
   const handleGenerateReport = () => {
     // For attendees, report registered events; for organizer, report revenue summary.
     if (userRole === "attendee") {
-      generatePDFReport(attendeePaymentHistory, 'financial');
+      generatePDFReport(attendeePaymentHistory, 'attendee_financial');
     } else {
-      generatePDFReport(revenueByEvent, 'financial');
-    }
+      generatePDFReport(revenueByEvent, 'organizer_financial');
+    }    
   };
   
   return (

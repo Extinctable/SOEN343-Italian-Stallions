@@ -9,19 +9,73 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useUser } from "../../context/UserContext";
 
-const SignUp = () => {
-  // Mapping of roles to their respective categories.
-  const roleCategories = {
-    organizer: ["Event organizers", "Sponsors"],
-    attendee: ["Speakers", "Learners"],
-    administrator: ["Technical personnel", "Executive personnel"],
-    stakeholder: ["Educational institutions", "Event management companies", "Technology providers"],
-  };
+// Mapping of roles to their respective categories.
+const roleCategories = {
+  organizer: ["Event organizers", "Sponsors"],
+  attendee: ["Speakers", "Learners"],
+  administrator: ["Technical personnel", "Executive personnel"],
+  stakeholder: ["Educational institutions", "Event management companies", "Technology providers"],
+};
 
-  // State to track the currently selected role.
+// -----------------------------------------
+// Strategy Pattern for Login
+// -----------------------------------------
+class LoginStrategy {
+  async login(email, password) {
+    throw new Error("Method not implemented");
+  }
+}
+
+class OrganizerLogin extends LoginStrategy {
+  async login(email, password) {
+    const url = `http://localhost:5002/login?email=${email}&password=${password}&role=organizer`;
+    return await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+  }
+}
+
+class AttendeeLogin extends LoginStrategy {
+  async login(email, password) {
+    const url = `http://localhost:5002/login?email=${email}&password=${password}&role=attendee`;
+    return await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+  }
+}
+
+class AdminLogin extends LoginStrategy {
+  async login(email, password) {
+    const url = `http://localhost:5002/login?email=${email}&password=${password}&role=administrator`;
+    return await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+  }
+}
+
+class StakeholderLogin extends LoginStrategy {
+  async login(email, password) {
+    const url = `http://localhost:5002/login?email=${email}&password=${password}&role=stakeholder`;
+    return await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+  }
+}
+
+// -----------------------------------------
+// SignUp Component
+// -----------------------------------------
+const SignUp = () => {
+  // State for role selection and form fields.
   const [role, setRole] = useState("organizer"); // Default role.
-  
-  // State to hold form data.
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -30,14 +84,9 @@ const SignUp = () => {
     newpassword: "",
     category: roleCategories["organizer"][0],
   });
-
-  // Boolean state for toggling between login and sign up modes.
   const [isLogin, setIsLogin] = useState(false);
-  // Object to hold any validation errors.
   const [validationErrors, setValidationErrors] = useState({});
-  // State for controlling visibility of the password reset modal.
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // States to toggle password visibility.
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -45,62 +94,48 @@ const SignUp = () => {
   const navigate = useNavigate();
   const { login } = useUser();
 
-  // Toggle functions for showing/hiding passwords.
+  // Toggle visibility functions.
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
   const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
   const toggleNewPasswordVisibility = () => setShowNewPassword(!showNewPassword);
 
-  // Validate sign up form inputs.
   const validateSignUp = () => {
     const { fullName, email, password, confirmpassword, category } = formData;
     const errors = {};
-
     if (!/^[a-zA-Z\s]{1,100}$/.test(fullName)) {
       errors.fullName = "Full name is not valid";
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = "Email is not valid";
     }
-
     if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)) {
-      errors.password =
-        "Password must be at least 8 characters, including at least one letter and one number.";
+      errors.password = "Password must be at least 8 characters, including at least one letter and one number.";
     }
-
     if (password !== confirmpassword) {
       errors.confirmpassword = "Passwords do not match.";
     }
-
     if (!category) {
       errors.category = "Please select a category.";
     }
-
     return errors;
   };
 
-  // Validate password reset inputs.
   const validatePasswordReset = () => {
     const { email, newpassword, confirmpassword } = formData;
     const errors = {};
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = "Email is not valid";
     }
-
     if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(newpassword)) {
-      errors.newpassword =
-        "New password must be at least 8 characters, including at least one letter and one number.";
+      errors.newpassword = "New password must be at least 8 characters, including at least one letter and one number.";
     }
-
     if (newpassword !== confirmpassword) {
       errors.confirmpassword = "Passwords do not match.";
     }
-
     return errors;
   };
 
-  // Handler for sign up submissions.
+  // Handler for sign up.
   const handleSignUp = async (e) => {
     e.preventDefault();
     const errors = validateSignUp();
@@ -108,22 +143,18 @@ const SignUp = () => {
       setValidationErrors(errors);
       return;
     }
-
-    // Use the updated signup endpoint (port 5002).
     const url = "http://localhost:5002/signup";
     try {
       const response = await axios.post(url, {
-        role, // e.g., "organizer", "attendee", etc.
+        role, // "organizer", "attendee", etc.
         category: formData.category,
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
       });
-
       if (response.status === 201) {
         console.log("Signup successful");
-        // Save any user data as needed (e.g., user ID or token).
-        navigate("/teams");
+        navigate("/home");
       } else {
         console.error("Signup failed");
       }
@@ -132,28 +163,29 @@ const SignUp = () => {
     }
   };
 
-  // Handler for login submissions.
+  // Handler for login using the Strategy Pattern.
   const handleLogin = async (e) => {
     e.preventDefault();
-    const url = `http://localhost:5002/login?email=${formData.email}&password=${formData.password}&role=${role}`;
-  
+    let strategy;
+    if (role === "organizer") {
+      strategy = new OrganizerLogin();
+    } else if (role === "attendee") {
+      strategy = new AttendeeLogin();
+    } else if (role === "administrator") {
+      strategy = new AdminLogin();
+    } else if (role === "stakeholder") {
+      strategy = new StakeholderLogin();
+    }
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include'
-      });
-  
+      const response = await strategy.login(formData.email, formData.password);
       if (response.ok) {
         const user = await response.json();
         localStorage.setItem("user_id", user.user_id);
         localStorage.setItem("user_role", role);
-        localStorage.setItem("user_category", formData.category); // ⬅️ Add this
+        localStorage.setItem("user_category", formData.category);
         console.log("Login Successful:", user);
-        navigate("/teams");
-      }
-      
-       else {
+        navigate("/home");
+      } else {
         const data = await response.json();
         const errorMessage = data.message || "Login failed";
         setValidationErrors({
@@ -167,7 +199,6 @@ const SignUp = () => {
       console.error("Error during login:", error);
     }
   };
-  
 
   // Update formData as the user types.
   const handleChange = (e) => {
@@ -178,7 +209,7 @@ const SignUp = () => {
     setValidationErrors({});
   };
 
-  // Change the active role and reset the form.
+  // Switch roles.
   const handleRoleSwitch = (selectedRole) => {
     setRole(selectedRole);
     setFormData({
@@ -191,7 +222,7 @@ const SignUp = () => {
     });
   };
 
-  // Toggle between sign up and login modes.
+  // Toggle between sign up and login.
   const handleFormSwitch = () => {
     setIsLogin(!isLogin);
     setFormData({
@@ -205,17 +236,15 @@ const SignUp = () => {
     setValidationErrors({});
   };
 
-  // Open the password reset modal.
+  // Password reset modal handlers.
   const handlePasswordResetModal = () => {
     setIsModalOpen(true);
   };
 
-  // Close the password reset modal.
   const handleModalClose = () => {
     setIsModalOpen(false);
   };
 
-  // Handler for password reset submissions.
   const handleNewPassword = async (e) => {
     e.preventDefault();
     const errors = validatePasswordReset();
@@ -223,20 +252,17 @@ const SignUp = () => {
       setValidationErrors(errors);
       return;
     }
-
-    const url = "http://localhost:5002/changePassword"; // This endpoint should be implemented on your server.
+    const url = "http://localhost:5002/changePassword";
     const data = {
       email: formData.email,
       new_password: formData.newpassword,
     };
-
     try {
       const response = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
       if (response.status === 200) {
         console.log("Password change successful");
         alert("Password updated successfully! Please login with your new password.");
@@ -256,20 +282,12 @@ const SignUp = () => {
 
   return (
     <div className="container">
-      {/* Background image */}
-      <img src={backgroundImage} alt="Description" className="image" />
-
-      {/* Application title */}
+      <img src={backgroundImage} alt="Background" className="image" />
       <div className="peer-title">
         <h2>Italian Stallions</h2>
       </div>
-
-      {/* Main content area */}
       <div className="info">
-        {/* Display title based on mode */}
         <h1>{isLogin ? "Login" : "Sign Up"}</h1>
-
-        {/* Role selection panel */}
         <div className="button-role">
           {["organizer", "attendee", "administrator", "stakeholder"].map((item) => (
             <button
@@ -281,8 +299,6 @@ const SignUp = () => {
             </button>
           ))}
         </div>
-
-        {/* Form for login/sign up */}
         <form onSubmit={isLogin ? handleLogin : handleSignUp}>
           {!isLogin && (
             <>
@@ -316,7 +332,6 @@ const SignUp = () => {
                   required
                 />
               </div>
-              {/* Category dropdown */}
               <div>
                 <TextField
                   select
@@ -338,7 +353,6 @@ const SignUp = () => {
               </div>
             </>
           )}
-
           {isLogin && (
             <div>
               <TextField
@@ -356,8 +370,6 @@ const SignUp = () => {
               />
             </div>
           )}
-
-          {/* Password field */}
           <div>
             <TextField
               className="textfield"
@@ -386,8 +398,6 @@ const SignUp = () => {
               }}
             />
           </div>
-
-          {/* Confirm Password for sign up */}
           {!isLogin && (
             <div>
               <TextField
@@ -418,34 +428,19 @@ const SignUp = () => {
               />
             </div>
           )}
-
           <Button type="submit" variant="contained" className="button-signup">
             {isLogin ? "Login" : "Sign Up"}
           </Button>
         </form>
-
-        {/* Mode switch prompt */}
         <div className="signup-prompt">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <span
-            onClick={handleFormSwitch}
-            className="signup-link"
-            style={{ cursor: "pointer", color: "#1860C3", textDecoration: "underline" }}
-          >
+          <span onClick={handleFormSwitch} className="signup-link" style={{ cursor: "pointer", color: "#1860C3", textDecoration: "underline" }}>
             {isLogin ? "Sign Up" : "Login"}
           </span>
         </div>
-
-        {/* Password reset link (visible only in login mode) */}
-        <span
-          onClick={handlePasswordResetModal}
-          className="password-link"
-          style={{ cursor: "pointer", color: "#1860C3", textDecoration: "underline" }}
-        >
+        <span onClick={handlePasswordResetModal} className="password-link" style={{ cursor: "pointer", color: "#1860C3", textDecoration: "underline" }}>
           {isLogin ? "Forgot your password? " : ""}
         </span>
-
-        {/* Password reset modal */}
         {isModalOpen && (
           <div className="container-modal" onClick={handleModalClose}>
             <div className="modal-PSW-content" onClick={(e) => e.stopPropagation()}>

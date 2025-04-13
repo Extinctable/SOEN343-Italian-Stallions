@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './EventManager.css';
-import { generatePDFReport } from '../../utils/reportGenerator';
+import { generatePDFReport } from '../../utils/reports/reportDispatcher';
 import CreateEventForm from './CreateEventForm';
 import UpdateEventForm from './UpdateEventForm';
+import { notificationSubject } from "../Notifications/Notifications";
 
 
 // Dummy user role for demonstration ("organizer" or "attendee")
 // In a real app, replace this with your authenticated user context.
-const userRole = "attendee"; // Change to "attendee" to test attendee flow
-const userId = 2; // Replace with actual authenticated attendee user ID
+const userRole = "organizer"; // Change to "attendee" to test attendee flow
+const userId = 1; // Replace with actual authenticated attendee user ID
 
 // --------------------
 // Command Pattern Classes for Organizer Flow (DB Implementation)
@@ -81,40 +82,9 @@ class UpdateEventCommand extends EventCommand {
       this.updateEventCallback(this.eventId, updatedEvent);
       console.log("Updated event:", updatedEvent);
       
-      // --- Notification Functionality ---
-      // Query the user_events endpoint by event_id.
-      try {
-        console.log(`Fetching user events with event_id: ${this.eventId}`);
-        const regResponse = await fetch(`http://localhost:5002/api/userEvents?event_id=${this.eventId}`);
-        console.log("regResponse status:", regResponse.status);
-        if (regResponse.ok) {
-          const registrations = await regResponse.json();
-          // For each registration, send a notification.
-          console.log("Registrations for event:", registrations);
-          registrations.forEach(async (registration) => {
-            try {
-              const notifyResponse = await fetch('http://localhost:5002/api/notifications', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  user_id: registration.user_id,
-                  event_id: this.eventId,
-                  message: `The event "${updatedEvent.title}" has been updated.`
-                })
-              });
-              const notifyResult = await notifyResponse.json();
-              console.log(`Notification sent to user ${registration.user_id}:`, notifyResult);
-            } catch (notifyError) {
-              console.error("Error sending notification for user", registration.user_id, notifyError);
-            }
-          });
-        } else {
-          console.error("Failed to fetch registrations for event", this.eventId);
-        }
-      } catch (queryError) {
-        console.error("Error querying user_events for event", this.eventId, queryError);
-      }
-      // --- End Notification Functionality ---
+      // Instead of directly sending notifications here,
+      // notify all observers with the event update details.
+      notificationSubject.notify({ eventId: this.eventId, updatedEvent });
       
     } catch (err) {
       console.error("Error updating event:", err);
@@ -211,6 +181,54 @@ const EventManager = () => {
   };
 
   // ------------------------
+  // Notification subscription
+  // ------------------------
+
+  useEffect(() => {
+    const notificationObserver = async ({ eventId, updatedEvent }) => {
+      try {
+        console.log(`Observer triggered for event ${eventId}`);
+        // Query the registrations for this event.
+        const regResponse = await fetch(`http://localhost:5002/api/userEvents?event_id=${eventId}`);
+        if (regResponse.ok) {
+          const registrations = await regResponse.json();
+          console.log("Observer found registrations:", registrations);
+          registrations.forEach(async (registration) => {
+            try {
+              const notifyResponse = await fetch('http://localhost:5002/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  user_id: registration.user_id,
+                  event_id: eventId,
+                  message: `The event "${updatedEvent.title}" has been updated.`
+                })
+              });
+              const notifyResult = await notifyResponse.json();
+              console.log(`Notification sent to user ${registration.user_id}:`, notifyResult);
+            } catch (notifyError) {
+              console.error("Error sending notification for user", registration.user_id, notifyError);
+            }
+          });
+        } else {
+          console.error("Observer failed to fetch registrations for event", eventId);
+        }
+      } catch (err) {
+        console.error("Observer error:", err);
+      }
+    };
+  
+    // Subscribe the observer
+    notificationSubject.subscribe(notificationObserver);
+  
+    // Cleanup the subscription on unmount.
+    return () => {
+      notificationSubject.unsubscribe(notificationObserver);
+    };
+  }, []);
+
+  
+  // ------------------------
   // Organizer Flow Functions
   // ------------------------
   const fetchOrganizerEvents = async () => {
@@ -231,6 +249,7 @@ const EventManager = () => {
       fetchEvents();
     }
   }, []);
+
 
   const addEventLocal = (newEvent, deleteId) => {
     if (newEvent) {
@@ -370,7 +389,9 @@ const EventManager = () => {
   const handleGenerateReport = () => {
     // Use the events list for organizer or registeredEvents for attendee.
     const reportData = userRole === "organizer" ? events : registeredEvents;
-    generatePDFReport(reportData, 'event');
+    const context = userRole === "organizer" ? "organizer_event" : "attendee_event";
+    generatePDFReport(reportData, context);
+    
   };
 
   return (
