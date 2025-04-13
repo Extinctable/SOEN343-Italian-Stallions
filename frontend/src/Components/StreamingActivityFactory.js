@@ -1,4 +1,3 @@
-// server/activities/NetworkActivityFactory.js
 const QASession = require("./QASession");
 const LivePolling = require("./LivePolling");
 
